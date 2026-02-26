@@ -9,7 +9,7 @@ class Request {
         // Get the REQUEST_URI
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
         
-        // Parse URL to get path only
+        // Parse URL to get path only (remove query string and fragment)
         $uri = parse_url($uri, PHP_URL_PATH);
         
         // Remove /public/ prefix
@@ -22,7 +22,7 @@ class Request {
         
         $uri = rtrim($uri, '/') ?: '/';
         
-        // Add /api prefix jika belum ada
+        // Add /api prefix jika belum ada dan bukan root
         if ($uri !== '/' && strpos($uri, '/api') !== 0 && !in_array($uri, ['/test.php', '/hello.php', '/status'])) {
             $uri = '/api' . $uri;
         }
@@ -36,7 +36,8 @@ class Request {
     }
 
     public static function getQuery() {
-        return $_GET;
+        // $_GET already contains all query parameters correctly
+        return $_GET ?? [];
     }
 
     public static function getHeader($key) {

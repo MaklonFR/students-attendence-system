@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Backend</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .test { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .result { background: #f0f0f0; padding: 10px; margin-top: 10px; }
+        pre { overflow-x: auto; }
+        button { padding: 8px 15px; cursor: pointer; }
+        .login-section { background: #e3f2fd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .login-section input { padding: 8px; margin: 5px; width: 200px; }
+        .token-status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .token-valid { background: #c8e6c9; }
+        .token-invalid { background: #ffcdd2; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test API Backend</h1>
+    
+    <div class="login-section">
+        <h3>🔐 Login untuk Mendapatkan Token</h3>
+        <div>
+            <input type="text" id="email" placeholder="Email" value="admin@example.com">
+            <input type="password" id="password" placeholder="Password" value="admin123">
+            <button onclick="doLogin()">Login</button>
+            <button onclick="clearToken()">Clear Token</button>
+        </div>
+        <div id="tokenStatus" class="token-status"></div>
+    </div>
+    
+    <div class="test">
+        <h3>Test 1: Get Siswa Kelas 7A</h3>
+        <button onclick="testSiswa('7A')">Test 7A</button>
+        <div id="result1" class="result"></div>
+    </div>
+
+    <div class="test">
+        <h3>Test 2: Get Siswa Kelas 7B</h3>
+        <button onclick="testSiswa('7B')">Test 7B</button>
+        <div id="result2" class="result"></div>
+    </div>
+
+    <div class="test">
+        <h3>Test 3: Get Siswa Kelas 8A</h3>
+        <button onclick="testSiswa('8A')">Test 8A</button>
+        <div id="result3" class="result"></div>
+    </div>
+
+    <div class="test">
+        <h3>Test 4: Raw API Response (Kelas 7A)</h3>
+        <button onclick="testRawResponse()">Test</button>
+        <div id="result4" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://absen.batucermin-desa.id/public';
+        let token = localStorage.getItem('test_token') || '';
+
+        // Update token status on load
+        window.onload = function() {
+            updateTokenStatus();
+        };
+
+        function updateTokenStatus() {
+            const statusDiv = document.getElementById('tokenStatus');
+            if (token) {
+                statusDiv.className = 'token-status token-valid';
+                statusDiv.innerHTML = `<strong class="success">✓ Token tersedia:</strong> ${token.substring(0, 20)}...`;
+            } else {
+                statusDiv.className = 'token-status token-invalid';
+                statusDiv.innerHTML = '<strong class="error">✗ Belum login. Silakan login terlebih dahulu.</strong>';
+            }
+        }
+
+        async function doLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const statusDiv = document.getElementById('tokenStatus');
+
+            try {
+                statusDiv.innerHTML = '<strong>⏳ Logging in...</strong>';
+                
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    token = data.data.token;
+                    localStorage.setItem('test_token', token);
+                    statusDiv.className = 'token-status token-valid';
+                    statusDiv.innerHTML = `
+                        <strong class="success">✓ Login berhasil!</strong><br>
+                        <strong>User:</strong> ${data.data.user.username} (${data.data.user.role})<br>
+                        <strong>Token:</strong> ${token.substring(0, 30)}...
+                    `;
+                } else {
+                    throw new Error(data.message || 'Login gagal');
+                }
+            } catch (error) {
+                statusDiv.className = 'token-status token-invalid';
+                statusDiv.innerHTML = `<strong class="error">✗ Error: ${error.message}</strong>`;
+            }
+        }
+
+        function clearToken() {
+            token = '';
+            localStorage.removeItem('test_token');
+            updateTokenStatus();
+        }
+
+        async function testSiswa(kelas) {
+            if (!token) {
+                alert('Silakan login terlebih dahulu untuk mendapatkan token!');
+                return;
+            }
+
+            try {
+                const url = `${API_BASE}/api/siswa?kelas=${kelas}&status=aktif`;
+                console.log('Testing URL:', url);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                const resultId = kelas === '7A' ? 'result1' : kelas === '7B' ? 'result2' : 'result3';
+                
+                document.getElementById(resultId).innerHTML = `
+                    <strong>Status:</strong> ${response.status} ${response.ok ? '✓' : '✗'}<br>
+                    <strong>URL:</strong> ${url}<br>
+                    <strong>Jumlah Siswa:</strong> ${data.data?.data?.length || 0}<br>
+                    <strong>Response:</strong>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                const resultId = kelas === '7A' ? 'result1' : kelas === '7B' ? 'result2' : 'result3';
+                document.getElementById(resultId).innerHTML = `<span style="color: red;">Error: ${error.message}</span>`;
+            }
+        }
+
+        async function testRawResponse() {
+            if (!token) {
+                alert('Silakan login terlebih dahulu untuk mendapatkan token!');
+                return;
+            }
+
+            try {
+                const url = `${API_BASE}/api/siswa?kelas=7A&status=aktif`;
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const text = await response.text();
+                document.getElementById('result4').innerHTML = `
+                    <strong>Status:</strong> ${response.status} ${response.ok ? '✓' : '✗'}<br>
+                    <strong>Raw Response:</strong>
+                    <pre>${text}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result4').innerHTML = `<span style="color: red;">Error: ${error.message}</span>`;
+            }
+        }
+
+        console.log('API Base URL:', API_BASE);
+    </script>
+</body>
+</html>

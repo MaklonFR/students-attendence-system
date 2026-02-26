@@ -7,7 +7,7 @@ class Siswa {
         $this->conn = $db;
     }
 
-    public function getAll($search = '', $kelas = '', $limit = 50, $offset = 0) {
+    public function getAll($search = '', $kelas = '', $status = '', $limit = 50, $offset = 0) {
         $query = "SELECT * FROM siswa WHERE 1=1";
         
         if ($search) {
@@ -16,8 +16,20 @@ class Siswa {
         if ($kelas) {
             $query .= " AND kelas = :kelas";
         }
+        if ($status) {
+            $query .= " AND status = :status";
+        }
         
         $query .= " ORDER BY nama_lengkap ASC LIMIT :limit OFFSET :offset";
+        
+        // Debug log dengan tipe data
+        error_log('=== Siswa::getAll() ===');
+        error_log('Query: ' . $query);
+        error_log('Params: [search="' . $search . '", kelas="' . $kelas . '", status="' . $status . '", limit=' . $limit . ', offset=' . $offset . ']');
+        error_log('Kelas is empty: ' . (empty($kelas) ? 'YES' : 'NO'));
+        error_log('Kelas value: [' . $kelas . ']');
+        error_log('Kelas type: ' . gettype($kelas));
+        error_log('==================');
         
         $stmt = $this->conn->prepare($query);
         
@@ -26,17 +38,27 @@ class Siswa {
             $stmt->bindParam(':search', $searchParam);
         }
         if ($kelas) {
+            error_log('Binding kelas parameter: ' . $kelas);
             $stmt->bindParam(':kelas', $kelas);
+        }
+        if ($status) {
+            error_log('Binding status parameter: ' . $status);
+            $stmt->bindParam(':status', $status);
         }
         
         $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
         
-        return $stmt->fetchAll();
+        $result = $stmt->execute();
+        error_log('Execute result: ' . ($result ? 'SUCCESS' : 'FAILED'));
+        
+        $data = $stmt->fetchAll();
+        error_log('Rows returned: ' . count($data));
+        
+        return $data;
     }
 
-    public function count($search = '', $kelas = '') {
+    public function count($search = '', $kelas = '', $status = '') {
         $query = "SELECT COUNT(*) as total FROM siswa WHERE 1=1";
         
         if ($search) {
@@ -45,6 +67,9 @@ class Siswa {
         if ($kelas) {
             $query .= " AND kelas = :kelas";
         }
+        if ($status) {
+            $query .= " AND status = :status";
+        }
         
         $stmt = $this->conn->prepare($query);
         
@@ -54,6 +79,9 @@ class Siswa {
         }
         if ($kelas) {
             $stmt->bindParam(':kelas', $kelas);
+        }
+        if ($status) {
+            $stmt->bindParam(':status', $status);
         }
         
         $stmt->execute();

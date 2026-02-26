@@ -23,9 +23,18 @@ require_once __DIR__ . '/../controllers/AbsensiController.php';
 require_once __DIR__ . '/../controllers/LaporanController.php';
 require_once __DIR__ . '/../controllers/MonitoringController.php';
 
-// Handle route query parameter untuk frontend
+// Handle route query parameter untuk backward compatibility
 if (isset($_GET['route'])) {
-    $_SERVER['REQUEST_URI'] = '/public/' . $_GET['route'];
+    // Preserve query parameters while setting correct REQUEST_URI
+    $query_params = $_GET;
+    unset($query_params['route']);
+    $route = $_GET['route'];
+    
+    // Build proper API path
+    $_SERVER['REQUEST_URI'] = '/api/' . $route;
+    if (!empty($query_params)) {
+        $_SERVER['REQUEST_URI'] .= '?' . http_build_query($query_params);
+    }
 }
 
 require_once __DIR__ . '/../routes/api.php';

@@ -108,9 +108,16 @@
             }
             
             try {
-                // Fetch siswa data
-                const siswaResponse = await api.getSiswa(`?kelas=${kelas}&status=aktif`);
+                console.log('Loading siswa for kelas:', kelas, 'tanggal:', tanggal);
+                
+                // Fetch siswa data with proper status filter
+                const siswaParams = `?kelas=${encodeURIComponent(kelas)}&status=aktif`;
+                console.log('Calling getSiswa with params:', siswaParams);
+                const siswaResponse = await api.getSiswa(siswaParams);
+                
+                console.log('Siswa response:', siswaResponse);
                 siswaData = siswaResponse.data.data;
+                console.log('Siswa data received:', siswaData.length, 'students');
                 
                 // Initialize absensiData for all students
                 absensiData = {};
@@ -119,15 +126,19 @@
                         id: null,
                         status: 'hadir',
                         keterangan: '',
-                        isNew: true // Track if this is a new record
+                        isNew: true
                     };
                 });
                 
                 // Fetch existing attendance data for the selected date and class
-                const absensiResponse = await api.getAbsensi(`?tanggal=${tanggal}&kelas=${kelas}`);
+                const absensiParams = `?tanggal=${tanggal}&kelas=${encodeURIComponent(kelas)}`;
+                console.log('Calling getAbsensi with params:', absensiParams);
+                const absensiResponse = await api.getAbsensi(absensiParams);
+                console.log('Absensi response:', absensiResponse);
                 
                 // Update existing attendance data
                 if (absensiResponse.data && Array.isArray(absensiResponse.data)) {
+                    console.log('Found', absensiResponse.data.length, 'existing attendance records');
                     absensiResponse.data.forEach(absensi => {
                         if (absensiData[absensi.siswa_id]) {
                             absensiData[absensi.siswa_id] = {
@@ -143,13 +154,14 @@
                 const tbody = document.getElementById('siswaTable');
                 tbody.innerHTML = '';
                 
-                siswaData.forEach(siswa => {
-                    // Get saved data if exists, otherwise use default
+                console.log('Building table with', siswaData.length, 'rows');
+                
+                const rowsHtml = siswaData.map(siswa => {
                     const saved = absensiData[siswa.id];
                     const status = saved ? saved.status : 'hadir';
                     const keterangan = saved ? saved.keterangan : '';
                     
-                    tbody.innerHTML += `
+                    return `
                         <tr class="hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0">
                             <td class="px-6 py-4 text-sm text-gray-700">${siswa.nama_lengkap}</td>
                             <td class="px-6 py-4">
@@ -182,88 +194,127 @@
                             </td>
                         </tr>
                     `;
-                });
+                }).join('');
                 
-                // Add event listeners to status labels
+                tbody.innerHTML = rowsHtml;
+                
+                // Add event listeners to status labels using event delegation
                 attachStatusEventListeners();
                 
+                console.log('✓ Siswa loaded successfully');
                 document.getElementById('siswaList').classList.remove('hidden');
             } catch (error) {
+                console.error('Error loading siswa:', error);
                 showToast(error.message, 'error');
             }
         };
 
-        // Function to handle status selection and UI updates
+        // Function to handle status selection and UI updates using event delegation
         const attachStatusEventListeners = () => {
-            const statusLabels = document.querySelectorAll('.status-label');
+            // Remove old listeners (if any)
+            const siswaTableContainer = document.getElementById('siswaTable');
+            if (siswaTableContainer._delegateListener) {
+                siswaTableContainer.removeEventListener('click', siswaTableContainer._delegateListener);
+            }
             
-            statusLabels.forEach(label => {
-                label.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const siswaId = parseInt(label.getAttribute('data-siswa-id'));
-                    const newStatus = label.getAttribute('data-status');
+            // Create and attach new delegate listener
+            const delegateListener = (e) => {
+                const label = e.target.closest('.status-label');
+                if (!label) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const siswaId = parseInt(label.getAttribute('data-siswa-id'));
+                const newStatus = label.getAttribute('data-status');
+                
+                console.log('🔄 Clicked status:', newStatus, 'for siswa:', siswaId);
+                
+                // Get the parent row
+                const tr = label.closest('tr');
+                if (!tr) {
+                    console.error('Could not find row for label');
+                    return;
+                }
+                
+                // Uncheck all radios in this row first
+                const allRadios = tr.querySelectorAll('input[type="radio"]');
+                allRadios.forEach(radio => {
+                    radio.checked = false;
+                });
+                
+                // Check only the selected radio
+                const radio = label.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                }
+                
+                // Update absensiData with the new status
+                if (absensiData[siswaId]) {
+                    absensiData[siswaId].status = newStatus;
+                    console.log('✓ Updated absensiData for siswa', siswaId, '→', newStatus);
+                } else {
+                    console.error('siswaId not found in absensiData:', siswaId);
+                }
+                
+                // Update all status labels for this student
+                const allLabels = tr.querySelectorAll('.status-label');
+                
+                // Reset all labels to default state
+                allLabels.forEach(lbl => {
+                    lbl.classList.remove(
+                        'bg-green-100', 'border-green-500', 'shadow-green-200', 'shadow-md',
+                        'bg-blue-100', 'border-blue-500', 'shadow-blue-200',
+                        'bg-yellow-100', 'border-yellow-500', 'shadow-yellow-200',
+                        'bg-red-100', 'border-red-500', 'shadow-red-200'
+                    );
+                    lbl.classList.add('bg-gray-50', 'border-2', 'border-gray-200');
                     
-                    // Update the radio button
-                    const radio = label.querySelector('input[type="radio"]');
-                    if (radio) {
-                        radio.checked = true;
-                    }
-                    
-                    // Update absensiData with the new status
-                    if (absensiData[siswaId]) {
-                        absensiData[siswaId].status = newStatus;
-                        console.log('Updated absensiData for siswa', siswaId, 'status:', newStatus);
-                    }
-                    
-                    // Update all status labels for this student
-                    const tr = label.closest('tr');
-                    const allLabels = tr.querySelectorAll('.status-label');
-                    
-                    allLabels.forEach(lbl => {
-                        const status = lbl.getAttribute('data-status');
-                        // Reset all to default state
-                        lbl.classList.remove(
-                            'bg-green-100', 'border-green-500', 'shadow-md', 'shadow-green-200',
-                            'bg-blue-100', 'border-blue-500', 'shadow-blue-200',
-                            'bg-yellow-100', 'border-yellow-500', 'shadow-yellow-200',
-                            'bg-red-100', 'border-red-500', 'shadow-red-200'
-                        );
-                        lbl.classList.add('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
-                        
-                        const span = lbl.querySelector('span');
+                    const span = lbl.querySelector('span');
+                    if (span) {
                         span.classList.remove('text-green-700', 'text-blue-700', 'text-yellow-700', 'text-red-700');
                         span.classList.add('text-gray-600');
-                    });
-                    
-                    // Highlight selected label
-                    switch (newStatus) {
-                        case 'hadir':
-                            label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
-                            label.classList.add('bg-green-100', 'border-2', 'border-green-500', 'shadow-md', 'shadow-green-200');
-                            label.querySelector('span').classList.remove('text-gray-600');
-                            label.querySelector('span').classList.add('text-green-700');
-                            break;
-                        case 'izin':
-                            label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
-                            label.classList.add('bg-blue-100', 'border-2', 'border-blue-500', 'shadow-md', 'shadow-blue-200');
-                            label.querySelector('span').classList.remove('text-gray-600');
-                            label.querySelector('span').classList.add('text-blue-700');
-                            break;
-                        case 'sakit':
-                            label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
-                            label.classList.add('bg-yellow-100', 'border-2', 'border-yellow-500', 'shadow-md', 'shadow-yellow-200');
-                            label.querySelector('span').classList.remove('text-gray-600');
-                            label.querySelector('span').classList.add('text-yellow-700');
-                            break;
-                        case 'alpha':
-                            label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
-                            label.classList.add('bg-red-100', 'border-2', 'border-red-500', 'shadow-md', 'shadow-red-200');
-                            label.querySelector('span').classList.remove('text-gray-600');
-                            label.querySelector('span').classList.add('text-red-700');
-                            break;
                     }
                 });
-            });
+                
+                // Now highlight only the selected label
+                label.classList.remove('bg-gray-50', 'border-gray-200');
+                const selectedSpan = label.querySelector('span');
+                
+                switch (newStatus) {
+                    case 'hadir':
+                        label.classList.add('bg-green-100', 'border-2', 'border-green-500', 'shadow-md', 'shadow-green-200');
+                        if (selectedSpan) {
+                            selectedSpan.classList.remove('text-gray-600');
+                            selectedSpan.classList.add('text-green-700');
+                        }
+                        break;
+                    case 'izin':
+                        label.classList.add('bg-blue-100', 'border-2', 'border-blue-500', 'shadow-md', 'shadow-blue-200');
+                        if (selectedSpan) {
+                            selectedSpan.classList.remove('text-gray-600');
+                            selectedSpan.classList.add('text-blue-700');
+                        }
+                        break;
+                    case 'sakit':
+                        label.classList.add('bg-yellow-100', 'border-2', 'border-yellow-500', 'shadow-md', 'shadow-yellow-200');
+                        if (selectedSpan) {
+                            selectedSpan.classList.remove('text-gray-600');
+                            selectedSpan.classList.add('text-yellow-700');
+                        }
+                        break;
+                    case 'alpha':
+                        label.classList.add('bg-red-100', 'border-2', 'border-red-500', 'shadow-md', 'shadow-red-200');
+                        if (selectedSpan) {
+                            selectedSpan.classList.remove('text-gray-600');
+                            selectedSpan.classList.add('text-red-700');
+                        }
+                        break;
+                }
+            };
+            
+            siswaTableContainer._delegateListener = delegateListener;
+            siswaTableContainer.addEventListener('click', delegateListener);
         };
 
         window.simpanAbsensi = async () => {

@@ -13,14 +13,26 @@ class SiswaController {
         Middleware::auth();
 
         $query = Request::getQuery();
+        error_log('=== SiswaController::index() ===');
+        error_log('Raw $_GET: ' . json_encode($_GET));
+        error_log('Request::getQuery(): ' . json_encode($query));
+        
         $search = $query['search'] ?? '';
         $kelas = $query['kelas'] ?? '';
+        $status = $query['status'] ?? '';
         $page = isset($query['page']) ? (int)$query['page'] : 1;
         $limit = isset($query['limit']) ? (int)$query['limit'] : 10;
         $offset = ($page - 1) * $limit;
 
-        $data = $this->siswaModel->getAll($search, $kelas, $limit, $offset);
-        $total = $this->siswaModel->count($search, $kelas);
+        // Debug logging
+        error_log('Extracted: search="' . $search . '", kelas="' . $kelas . '", status="' . $status . '"');
+        error_log('Kelas is empty: ' . (empty($kelas) ? 'YES' : 'NO'));
+        error_log('================================');
+
+        $data = $this->siswaModel->getAll($search, $kelas, $status, $limit, $offset);
+        $total = $this->siswaModel->count($search, $kelas, $status);
+
+        error_log('Found ' . count($data) . ' students matching filters');
 
         Response::success('Data siswa berhasil diambil', [
             'data' => $data,
