@@ -112,18 +112,31 @@
                 const siswaResponse = await api.getSiswa(`?kelas=${kelas}&status=aktif`);
                 siswaData = siswaResponse.data.data;
                 
+                // Initialize absensiData for all students
+                absensiData = {};
+                siswaData.forEach(siswa => {
+                    absensiData[siswa.id] = {
+                        id: null,
+                        status: 'hadir',
+                        keterangan: '',
+                        isNew: true // Track if this is a new record
+                    };
+                });
+                
                 // Fetch existing attendance data for the selected date and class
                 const absensiResponse = await api.getAbsensi(`?tanggal=${tanggal}&kelas=${kelas}`);
                 
-                // Create a map of existing attendance data by siswa_id
-                absensiData = {};
+                // Update existing attendance data
                 if (absensiResponse.data && Array.isArray(absensiResponse.data)) {
                     absensiResponse.data.forEach(absensi => {
-                        absensiData[absensi.siswa_id] = {
-                            id: absensi.id,
-                            status: absensi.status,
-                            keterangan: absensi.keterangan || ''
-                        };
+                        if (absensiData[absensi.siswa_id]) {
+                            absensiData[absensi.siswa_id] = {
+                                id: absensi.id,
+                                status: absensi.status,
+                                keterangan: absensi.keterangan || '',
+                                isNew: false
+                            };
+                        }
                     });
                 }
                 
@@ -186,7 +199,8 @@
             
             statusLabels.forEach(label => {
                 label.addEventListener('click', (e) => {
-                    const siswaId = label.getAttribute('data-siswa-id');
+                    e.preventDefault();
+                    const siswaId = parseInt(label.getAttribute('data-siswa-id'));
                     const newStatus = label.getAttribute('data-status');
                     
                     // Update the radio button
@@ -195,11 +209,11 @@
                         radio.checked = true;
                     }
                     
-                    // Update absensiData
-                    if (!absensiData[siswaId]) {
-                        absensiData[siswaId] = {};
+                    // Update absensiData with the new status
+                    if (absensiData[siswaId]) {
+                        absensiData[siswaId].status = newStatus;
+                        console.log('Updated absensiData for siswa', siswaId, 'status:', newStatus);
                     }
-                    absensiData[siswaId].status = newStatus;
                     
                     // Update all status labels for this student
                     const tr = label.closest('tr');
@@ -207,6 +221,7 @@
                     
                     allLabels.forEach(lbl => {
                         const status = lbl.getAttribute('data-status');
+                        // Reset all to default state
                         lbl.classList.remove(
                             'bg-green-100', 'border-green-500', 'shadow-md', 'shadow-green-200',
                             'bg-blue-100', 'border-blue-500', 'shadow-blue-200',
@@ -225,21 +240,25 @@
                         case 'hadir':
                             label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
                             label.classList.add('bg-green-100', 'border-2', 'border-green-500', 'shadow-md', 'shadow-green-200');
+                            label.querySelector('span').classList.remove('text-gray-600');
                             label.querySelector('span').classList.add('text-green-700');
                             break;
                         case 'izin':
                             label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
                             label.classList.add('bg-blue-100', 'border-2', 'border-blue-500', 'shadow-md', 'shadow-blue-200');
+                            label.querySelector('span').classList.remove('text-gray-600');
                             label.querySelector('span').classList.add('text-blue-700');
                             break;
                         case 'sakit':
                             label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
                             label.classList.add('bg-yellow-100', 'border-2', 'border-yellow-500', 'shadow-md', 'shadow-yellow-200');
+                            label.querySelector('span').classList.remove('text-gray-600');
                             label.querySelector('span').classList.add('text-yellow-700');
                             break;
                         case 'alpha':
                             label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
                             label.classList.add('bg-red-100', 'border-2', 'border-red-500', 'shadow-md', 'shadow-red-200');
+                            label.querySelector('span').classList.remove('text-gray-600');
                             label.querySelector('span').classList.add('text-red-700');
                             break;
                     }
@@ -255,44 +274,70 @@
                 return;
             }
             
-            const statusRadios = document.querySelectorAll('.status-radio:checked');
             const keteranganInputs = document.querySelectorAll('.keterangan-input');
-            
             const promises = [];
+            let count = 0;
             
-            statusRadios.forEach((radio) => {
-                const siswaId = radio.getAttribute('data-siswa-id');
-                const status = radio.value;
-                const keteranganInput = document.querySelector(`.keterangan-input[data-siswa-id="${siswaId}"]`);
-                const keterangan = keteranganInput ? keteranganInput.value : '';
-                
-                // Check if attendance already exists
+            // Update keterangan dari input fields
+            keteranganInputs.forEach(input => {
+                const siswaId = input.getAttribute('data-siswa-id');
                 if (absensiData[siswaId]) {
-                    // Update existing attendance
-                    if (absensiData[siswaId].id) {
-                        promises.push(api.updateAbsensi(absensiData[siswaId].id, {
-                            status: status,
-                            keterangan: keterangan
-                        }));
-                    }
-                } else {
-                    // Create new attendance
-                    promises.push(api.createAbsensi({
-                        siswa_id: siswaId,
-                        tanggal: tanggal,
-                        status: status,
-                        keterangan: keterangan
-                    }));
+                    absensiData[siswaId].keterangan = input.value;
                 }
             });
             
+            // Process all students
+            siswaData.forEach(siswa => {
+                const siswaId = siswa.id;
+                if (absensiData[siswaId]) {
+                    const data = absensiData[siswaId];
+                    
+                    if (data.isNew || !data.id) {
+                        // Create new attendance record
+                        console.log('Creating new absensi for siswa', siswaId, data);
+                        promises.push({
+                            type: 'create',
+                            promise: api.createAbsensi({
+                                siswa_id: siswaId,
+                                tanggal: tanggal,
+                                status: data.status,
+                                keterangan: data.keterangan
+                            })
+                        });
+                    } else {
+                        // Update existing attendance record
+                        console.log('Updating absensi for siswa', siswaId, 'id:', data.id, data);
+                        promises.push({
+                            type: 'update',
+                            promise: api.updateAbsensi(data.id, {
+                                status: data.status,
+                                keterangan: data.keterangan
+                            })
+                        });
+                    }
+                }
+            });
+            
+            if (promises.length === 0) {
+                showToast('Tidak ada data yang akan disimpan', 'error');
+                return;
+            }
+            
             try {
-                await Promise.all(promises);
-                showToast('Absensi berhasil disimpan');
-                document.getElementById('siswaList').classList.add('hidden');
-                document.getElementById('kelas').value = '';
+                const results = await Promise.all(promises.map(p => p.promise));
+                showToast(`Absensi berhasil disimpan (${promises.length} record)`);
+                
+                // Reset UI
+                setTimeout(() => {
+                    document.getElementById('siswaList').classList.add('hidden');
+                    document.getElementById('kelas').value = '';
+                    document.getElementById('tanggal').value = formatDate(new Date());
+                    siswaData = [];
+                    absensiData = {};
+                }, 500);
             } catch (error) {
-                showToast(error.message, 'error');
+                console.error('Error saving absensi:', error);
+                showToast('Gagal menyimpan absensi: ' + error.message, 'error');
             }
         };
     </script>
