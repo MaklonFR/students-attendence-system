@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Kehadiran - Absensi SMP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    <div id="header"></div>
+    
+    <div class="flex-grow p-4 lg:p-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-4 lg:p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h3 class="text-lg lg:text-xl font-bold text-gray-800">Monitoring Kehadiran Real-Time</h3>
+                        <p class="text-sm text-gray-600 mt-1">Data kehadiran 7 hari terakhir (diurutkan berdasarkan alpha terbanyak)</p>
+                    </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span>Auto-refresh: <span id="countdown">30</span>s</span>
+                    </div>
+                    <button onclick="loadMonitoring()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-semibold text-blue-800">Periode: <span id="periodText">-</span></p>
+                        <p class="text-xs text-blue-700 mt-1">Data diperbarui otomatis setiap 30 detik</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto -mx-4 lg:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 lg:px-4 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">No</th>
+                                <th class="px-3 lg:px-4 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">NIS</th>
+                                <th class="px-3 lg:px-4 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">Nama Siswa</th>
+                                <th class="px-3 lg:px-4 py-3 text-left text-xs lg:text-sm font-semibold text-gray-700">Kelas</th>
+                                <th class="px-3 lg:px-4 py-3 text-center text-xs lg:text-sm font-semibold text-green-700">Hadir</th>
+                                <th class="px-3 lg:px-4 py-3 text-center text-xs lg:text-sm font-semibold text-blue-700">Izin</th>
+                                <th class="px-3 lg:px-4 py-3 text-center text-xs lg:text-sm font-semibold text-yellow-700">Sakit</th>
+                                <th class="px-3 lg:px-4 py-3 text-center text-xs lg:text-sm font-semibold text-red-700">Alpha</th>
+                                <th class="px-3 lg:px-4 py-3 text-center text-xs lg:text-sm font-semibold text-gray-700">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monitoringTable"></tbody>
+                    </table>
+                </div>
+                </div>
+
+                <div class="mt-4 text-sm text-gray-600">
+                    Total Siswa: <span id="totalSiswa" class="font-semibold">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer"></div>
+
+    <script type="module">
+        import { api } from '../assets/js/api.js';
+        import { renderHeader } from '../assets/components/header.js';
+        import { renderFooter } from '../assets/components/footer.js';
+        import { showToast } from '../assets/components/toast.js';
+        import { formatDateIndo } from '../assets/js/utils.js';
+
+        document.getElementById('header').innerHTML = renderHeader();
+        document.getElementById('footer').innerHTML = renderFooter();
+
+        let refreshInterval;
+        let countdownInterval;
+        let countdownValue = 30;
+
+        window.loadMonitoring = async () => {
+            try {
+                const response = await api.getMonitoringWeekly();
+                const data = response.data;
+                const period = response.period;
+                
+                // Update period text
+                document.getElementById('periodText').textContent = 
+                    `${formatDateIndo(period.start)} - ${formatDateIndo(period.end)}`;
+                
+                const tbody = document.getElementById('monitoringTable');
+                tbody.innerHTML = '';
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+                                Tidak ada data siswa
+                            </td>
+                        </tr>
+                    `;
+                    document.getElementById('totalSiswa').textContent = '0';
+                    return;
+                }
+                
+                data.forEach((siswa, index) => {
+                    const alpha = parseInt(siswa.alpha);
+                    const hadir = parseInt(siswa.hadir);
+                    
+                    let statusBadge = '';
+                    let rowClass = '';
+                    
+                    if (alpha >= 3) {
+                        statusBadge = '<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Perlu Perhatian</span>';
+                        rowClass = 'bg-red-50';
+                    } else if (alpha >= 1) {
+                        statusBadge = '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">Waspada</span>';
+                        rowClass = 'bg-yellow-50';
+                    } else if (hadir >= 6) {
+                        statusBadge = '<span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Baik</span>';
+                    } else {
+                        statusBadge = '<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">Normal</span>';
+                    }
+                    
+                    tbody.innerHTML += `
+                        <tr class="border-b hover:bg-gray-50 ${rowClass}">
+                            <td class="px-3 lg:px-4 py-3 text-xs lg:text-sm">${index + 1}</td>
+                            <td class="px-3 lg:px-4 py-3 text-xs lg:text-sm">${siswa.nis}</td>
+                            <td class="px-3 lg:px-4 py-3 text-xs lg:text-sm font-medium">${siswa.nama_lengkap}</td>
+                            <td class="px-3 lg:px-4 py-3 text-xs lg:text-sm">${siswa.kelas}</td>
+                            <td class="px-3 lg:px-4 py-3 text-center">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-700 rounded-full font-semibold text-sm">
+                                    ${siswa.hadir}
+                                </span>
+                            </td>
+                            <td class="px-3 lg:px-4 py-3 text-center">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 rounded-full font-semibold text-sm">
+                                    ${siswa.izin}
+                                </span>
+                            </td>
+                            <td class="px-3 lg:px-4 py-3 text-center">
+                                <span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-700 rounded-full font-semibold text-sm">
+                                    ${siswa.sakit}
+                                </span>
+                            </td>
+                            <td class="px-3 lg:px-4 py-3 text-center">
+                                <span class="inline-flex items-center justify-center w-8 h-8 ${alpha >= 3 ? 'bg-red-500 text-white' : 'bg-red-100 text-red-700'} rounded-full font-bold text-sm">
+                                    ${siswa.alpha}
+                                </span>
+                            </td>
+                            <td class="px-3 lg:px-4 py-3 text-center">
+                                ${statusBadge}
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                document.getElementById('totalSiswa').textContent = data.length;
+                
+                // Reset countdown
+                countdownValue = 30;
+                document.getElementById('countdown').textContent = countdownValue;
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+
+        // Countdown timer
+        const startCountdown = () => {
+            countdownInterval = setInterval(() => {
+                countdownValue--;
+                document.getElementById('countdown').textContent = countdownValue;
+                
+                if (countdownValue <= 0) {
+                    countdownValue = 30;
+                }
+            }, 1000);
+        };
+
+        // Auto refresh every 30 seconds
+        const startAutoRefresh = () => {
+            refreshInterval = setInterval(() => {
+                loadMonitoring();
+            }, 30000);
+        };
+
+        // Initial load
+        loadMonitoring();
+        startCountdown();
+        startAutoRefresh();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(refreshInterval);
+            clearInterval(countdownInterval);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+{
+  "info": {
+    "name": "Absensi SMP API",
+    "description": "REST API Collection untuk Aplikasi Absensi SMP",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@smp.sch.id\",\n    \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "login"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/api/logout",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/api/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nama\": \"Guru Baru\",\n    \"email\": \"guru.baru@smp.sch.id\",\n    \"password\": \"password123\",\n    \"role\": \"guru\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "users"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Siswa",
+      "item": [
+        {
+          "name": "Get All Siswa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/api/siswa?search=&kelas=7A",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "siswa"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "kelas",
+                  "value": "7A"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Siswa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nis\": \"2024006\",\n    \"nama_lengkap\": \"Test Siswa\",\n    \"kelas\": \"7A\",\n    \"jenis_kelamin\": \"L\",\n    \"alamat\": \"Jl. Test No. 1\",\n    \"status\": \"aktif\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/siswa",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "siswa"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Absensi",
+      "item": [
+        {
+          "name": "Get Absensi",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/api/absensi?tanggal=2024-01-15&kelas=7A",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "absensi"],
+              "query": [
+                {
+                  "key": "tanggal",
+                  "value": "2024-01-15"
+                },
+                {
+                  "key": "kelas",
+                  "value": "7A"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Absensi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"siswa_id\": 1,\n    \"tanggal\": \"2024-01-15\",\n    \"status\": \"hadir\",\n    \"keterangan\": \"\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/absensi",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "absensi"]
+            }
+          }
+        },
+        {
+          "name": "Get Statistik",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/api/statistik",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "statistik"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Laporan",
+      "item": [
+        {
+          "name": "Laporan Harian",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/api/laporan/harian?tanggal=2024-01-15&kelas=7A",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "laporan", "harian"],
+              "query": [
+                {
+                  "key": "tanggal",
+                  "value": "2024-01-15"
+                },
+                {
+                  "key": "kelas",
+                  "value": "7A"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Laporan Bulanan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/api/laporan/bulanan?bulan=1&tahun=2024&kelas=7A",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8000",
+              "path": ["api", "laporan", "bulanan"],
+              "query": [
+                {
+                  "key": "bulan",
+                  "value": "1"
+                },
+                {
+                  "key": "tahun",
+                  "value": "2024"
+                },
+                {
+                  "key": "kelas",
+                  "value": "7A"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

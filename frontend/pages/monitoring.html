@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Kehadiran - Absensi SMP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes scrollDown {
+            0% {
+                transform: translateY(-100%);
+            }
+            100% {
+                transform: translateY(100vh);
+            }
+        }
+
+        .scroll-container {
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .scrolling-content {
+            animation: scrollDown linear infinite;
+            animation-duration: 60s;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .student-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid;
+            min-width: 100%;
+        }
+
+        .student-card.alpha-issue {
+            border-left-color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .student-card.sakit-issue {
+            border-left-color: #eab308;
+            background: #fefce8;
+        }
+
+        .student-card.ijin-issue {
+            border-left-color: #2563eb;
+            background: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 flex flex-col min-h-screen">
+    <div id="header"></div>
+    
+    <!-- Info Bar -->
+    <div class="bg-gray-800 border-b border-gray-700 px-4 lg:px-6 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div class="text-white text-sm">
+                <span class="font-semibold">Periode: <span id="periodText" class="text-emerald-400">-</span></span>
+                <span class="ml-4 text-gray-400">Siswa dengan masalah kehadiran</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="text-white text-xs">
+                    <div class="w-2 h-2 bg-green-500 rounded-full inline-block animate-pulse"></div>
+                    <span class="ml-1">Diperbarui: <span id="countdown" class="font-semibold">30</span>s</span>
+                </div>
+                <button onclick="loadMonitoring()" class="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition">
+                    Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scrolling Container -->
+    <div class="scroll-container bg-gray-900">
+        <div class="scrolling-content" id="scrollingContent">
+            <!-- Content will be inserted here -->
+        </div>
+    </div>
+
+    <div id="footer"></div>
+
+    <script type="module">
+        import { api } from '../assets/js/api.js';
+        import { renderHeader } from '../assets/components/header.js';
+        import { renderFooter } from '../assets/components/footer.js';
+        import { showToast } from '../assets/components/toast.js';
+        import { formatDateIndo } from '../assets/js/utils.js';
+
+        document.getElementById('header').innerHTML = renderHeader();
+        document.getElementById('footer').innerHTML = renderFooter();
+
+        let refreshInterval;
+        let countdownInterval;
+        let countdownValue = 30;
+
+        window.loadMonitoring = async () => {
+            try {
+                const response = await api.getMonitoringWeekly();
+                const data = response.data;
+                const period = response.period;
+                
+                // Update period text
+                document.getElementById('periodText').textContent = 
+                    `${formatDateIndo(period.start)} - ${formatDateIndo(period.end)}`;
+                
+                // Filter data: show only students with alpha, sakit, or ijin
+                const filteredData = data.filter(siswa => {
+                    const alpha = parseInt(siswa.alpha) || 0;
+                    const sakit = parseInt(siswa.sakit) || 0;
+                    const ijin = parseInt(siswa.izin) || 0;
+                    return alpha > 0 || sakit > 0 || ijin > 0;
+                });
+                
+                const scrollContainer = document.getElementById('scrollingContent');
+                scrollContainer.innerHTML = '';
+                
+                if (filteredData.length === 0) {
+                    scrollContainer.innerHTML = `
+                        <div class="text-white text-center py-20">
+                            <p class="text-xl font-semibold">Semua Siswa Hadir!</p>
+                            <p class="text-gray-400 mt-2">Tidak ada masalah kehadiran</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Create student cards with scrolling content
+                let contentHTML = '';
+                filteredData.forEach((siswa, index) => {
+                    const alpha = parseInt(siswa.alpha) || 0;
+                    const sakit = parseInt(siswa.sakit) || 0;
+                    const ijin = parseInt(siswa.izin) || 0;
+                    
+                    let issueType = '';
+                    let cardClass = '';
+                    
+                    if (alpha > 0) {
+                        issueType = `<span class="text-red-600 font-bold">ALPHA (${alpha})</span>`;
+                        cardClass = 'alpha-issue';
+                    } else if (sakit > 0) {
+                        issueType = `<span class="text-yellow-600 font-bold">SAKIT (${sakit})</span>`;
+                        cardClass = 'sakit-issue';
+                    } else if (ijin > 0) {
+                        issueType = `<span class="text-blue-600 font-bold">IJIN (${ijin})</span>`;
+                        cardClass = 'ijin-issue';
+                    }
+                    
+                    contentHTML += `
+                        <div class="student-card ${cardClass}">
+                            <div class="flex justify-between items-start gap-4">
+                                <div class="flex-grow">
+                                    <div class="font-bold text-gray-800 text-lg">${siswa.nama_lengkap}</div>
+                                    <div class="text-sm text-gray-600 mt-1">
+                                        <span>NIS: <span class="font-semibold">${siswa.nis}</span></span>
+                                        <span class="ml-4">Kelas: <span class="font-semibold">${siswa.kelas}</span></span>
+                                    </div>
+                                    <div class="mt-2 text-sm">
+                                        ${issueType}
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs text-gray-600 mb-2">Kehadiran 7 Hari:</div>
+                                    <div class="grid grid-cols-4 gap-1">
+                                        <div class="text-center">
+                                            <span class="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-700 rounded-full font-semibold text-xs">${siswa.hadir || 0}</span>
+                                            <div class="text-xs text-gray-600 mt-1">Hadir</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 rounded-full font-semibold text-xs">${siswa.izin || 0}</span>
+                                            <div class="text-xs text-gray-600 mt-1">Ijin</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-700 rounded-full font-semibold text-xs">${siswa.sakit || 0}</span>
+                                            <div class="text-xs text-gray-600 mt-1">Sakit</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="inline-flex items-center justify-center w-8 h-8 ${alpha >= 3 ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700'} rounded-full font-bold text-xs">${siswa.alpha || 0}</span>
+                                            <div class="text-xs text-gray-600 mt-1">Alpha</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                scrollContainer.innerHTML = contentHTML;
+                
+                // Reset countdown
+                countdownValue = 30;
+                document.getElementById('countdown').textContent = countdownValue;
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+
+        // Countdown timer
+        const startCountdown = () => {
+            countdownInterval = setInterval(() => {
+                countdownValue--;
+                document.getElementById('countdown').textContent = countdownValue;
+                
+                if (countdownValue <= 0) {
+                    countdownValue = 30;
+                }
+            }, 1000);
+        };
+
+        // Auto refresh every 30 seconds
+        const startAutoRefresh = () => {
+            refreshInterval = setInterval(() => {
+                loadMonitoring();
+            }, 30000);
+        };
+
+        // Initial load
+        loadMonitoring();
+        startCountdown();
+        startAutoRefresh();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(refreshInterval);
+            clearInterval(countdownInterval);
+        });
+    </script>
+</body>
+</html>

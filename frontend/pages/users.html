@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola User - Absensi SMP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-cyan-50">
+    <div id="sidebar"></div>
+    <div id="navbar"></div>
+    
+    <div class="lg:ml-64 p-4 lg:p-8">
+        <div class="bg-white rounded-2xl shadow-lg p-6 lg:p-8 border border-gray-100">
+            <!-- Header Section -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 pb-6 border-b border-gray-200">
+                <div>
+                    <h3 class="text-3xl lg:text-4xl font-bold text-gray-800">Kelola Pengguna</h3>
+                    <p class="text-gray-500 mt-1">Atur akses admin dan guru</p>
+                </div>
+                <button onclick="openModal()" class="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg hover:shadow-lg hover:shadow-emerald-500/30 transition-all text-sm lg:text-base font-medium">
+                    ➕ Tambah Pengguna
+                </button>
+            </div>
+            
+            <!-- Table Section -->
+            <div class="overflow-x-auto -mx-6 lg:mx-0 rounded-xl border border-gray-200 mb-6">
+                <table class="w-full">
+                    <thead class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Nama</th>
+                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Role</th>
+                            <th class="px-6 py-4 text-center text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTable" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination Section -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-200">
+                <div class="text-sm text-gray-600">
+                    Menampilkan <span id="showingStart" class="font-semibold">0</span> - <span id="showingEnd" class="font-semibold">0</span> dari <span id="totalData" class="font-semibold">0</span> data
+                </div>
+                <div class="flex gap-2" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-6 lg:p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
+            <h3 class="text-2xl lg:text-3xl font-bold mb-6" id="modalTitle">Tambah Pengguna</h3>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="mb-5">
+                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Nama Lengkap</label>
+                    <input type="text" id="nama" required class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                </div>
+                <div class="mb-5">
+                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Email</label>
+                    <input type="email" id="email" required class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                </div>
+                <div class="mb-5">
+                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Password</label>
+                    <input type="password" id="password" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                    <p class="text-xs text-gray-500 mt-2">💡 Kosongkan jika tidak ingin mengubah password</p>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Role</label>
+                    <select id="role" required class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm appearance-none cursor-pointer bg-white">
+                        <option value="guru">👨‍🏫 Guru</option>
+                        <option value="admin">👨‍💼 Admin</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white py-2.5 rounded-lg hover:shadow-lg hover:shadow-emerald-500/30 transition-all font-medium">💾 Simpan</button>
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg hover:bg-gray-300 transition-all font-medium">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { checkAuth, isAdmin, getUser } from '../assets/js/auth.js';
+        import { api } from '../assets/js/api.js';
+        import { renderSidebar } from '../assets/components/sidebar.js';
+        import { renderNavbar } from '../assets/components/navbar.js';
+        import { showToast } from '../assets/components/toast.js';
+        import { confirmDelete } from '../assets/js/utils.js';
+
+        checkAuth();
+
+        if (!isAdmin()) {
+            showToast('Akses ditolak. Hanya admin yang diizinkan', 'error');
+            setTimeout(() => window.location.href = '/pages/dashboard.html', 2000);
+        }
+
+        document.getElementById('sidebar').innerHTML = renderSidebar();
+        document.getElementById('navbar').innerHTML = renderNavbar();
+        document.getElementById('pageTitle').textContent = 'Kelola User';
+
+        const currentUser = getUser();
+        let currentPage = 1;
+        const limit = 10;
+
+        window.loadUsers = async (page = 1) => {
+            currentPage = page;
+            try {
+                const response = await api.getUsers();
+                const allUsers = response.data;
+                
+                // Filter out current user's own account from being shown
+                const filteredUsers = allUsers;
+                const total = filteredUsers.length;
+                const offset = (page - 1) * limit;
+                const users = filteredUsers.slice(offset, offset + limit);
+                
+                const tbody = document.getElementById('userTable');
+                tbody.innerHTML = '';
+                
+                if (users.length === 0 && page > 1) {
+                    loadUsers(1);
+                    return;
+                }
+                
+                users.forEach(user => {
+                    const isCurrentUser = user.id === currentUser.id;
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-100 last:border-b-0">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">${user.nama}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">${user.email}</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="px-3 py-1.5 rounded-full text-xs font-semibold ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
+                                    ${user.role === 'admin' ? '👨‍💼 Admin' : '👨‍🏫 Guru'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex gap-2 justify-center">
+                                    <button onclick="editUser(${user.id})" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all hover:shadow-md" title="Edit Pengguna">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    ${!isCurrentUser ? `<button onclick="deleteUser(${user.id})" class="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all hover:shadow-md" title="Hapus Pengguna">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>` : '<span class="text-xs text-gray-400">Akun Anda</span>'}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                // Update pagination info
+                const start = total > 0 ? offset + 1 : 0;
+                const end = Math.min(offset + limit, total);
+                document.getElementById('showingStart').textContent = start;
+                document.getElementById('showingEnd').textContent = end;
+                document.getElementById('totalData').textContent = total;
+                
+                // Render pagination buttons
+                const totalPages = Math.ceil(total / limit);
+                const paginationDiv = document.getElementById('pagination');
+                paginationDiv.innerHTML = '';
+                
+                if (totalPages > 1) {
+                    if (page > 1) {
+                        paginationDiv.innerHTML += `<button onclick="loadUsers(${page - 1})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">Prev</button>`;
+                    }
+                    for (let i = 1; i <= totalPages; i++) {
+                        if (i === page) {
+                            paginationDiv.innerHTML += `<button class="px-3 py-1 bg-green-600 text-white rounded text-sm">${i}</button>`;
+                        } else if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+                            paginationDiv.innerHTML += `<button onclick="loadUsers(${i})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">${i}</button>`;
+                        } else if (i === page - 2 || i === page + 2) {
+                            paginationDiv.innerHTML += `<span class="px-2">...</span>`;
+                        }
+                    }
+                    if (page < totalPages) {
+                        paginationDiv.innerHTML += `<button onclick="loadUsers(${page + 1})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">Next</button>`;
+                    }
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+
+        window.openModal = () => {
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modalTitle').textContent = 'Tambah User';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('password').required = true;
+        };
+
+        window.closeModal = () => {
+            document.getElementById('modal').classList.add('hidden');
+        };
+
+        window.editUser = async (id) => {
+            try {
+                const response = await api.getUsers();
+                const user = response.data.find(u => u.id === id);
+                
+                document.getElementById('userId').value = user.id;
+                document.getElementById('nama').value = user.nama;
+                document.getElementById('email').value = user.email;
+                document.getElementById('role').value = user.role;
+                document.getElementById('password').value = '';
+                document.getElementById('password').required = false;
+                
+                document.getElementById('modalTitle').textContent = 'Edit User';
+                document.getElementById('modal').classList.remove('hidden');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+
+        window.deleteUser = async (id) => {
+            if (!await confirmDelete()) return;
+            
+            try {
+                await api.deleteUser(id);
+                showToast('User berhasil dihapus');
+                loadUsers(currentPage);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                nama: document.getElementById('nama').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                role: document.getElementById('role').value
+            };
+            
+            const id = document.getElementById('userId').value;
+            
+            try {
+                if (id) {
+                    await api.updateUser(id, data);
+                    showToast('User berhasil diupdate');
+                } else {
+                    await api.createUser(data);
+                    showToast('User berhasil ditambahkan');
+                }
+                closeModal();
+                loadUsers(currentPage);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+
+        loadUsers();
+    </script>
+</body>
+</html>

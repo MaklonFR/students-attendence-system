@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Siswa - Absensi SMP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-cyan-50">
+    <div id="sidebar"></div>
+    <div id="navbar"></div>
+    
+    <div class="lg:ml-64 p-4 lg:p-8">
+        <div class="bg-white rounded-2xl shadow-lg p-6 lg:p-8 border border-gray-100">
+            <!-- Header Section -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 pb-6 border-b border-gray-200">
+                <div>
+                    <h3 class="text-3xl lg:text-4xl font-bold text-gray-800">Data Siswa</h3>
+                    <p class="text-gray-500 mt-1">Kelola informasi siswa sekolah</p>
+                </div>
+                <div class="flex flex-wrap gap-3 w-full sm:w-auto">
+                    <button onclick="downloadTemplate()" class="flex-1 sm:flex-none px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-lg transition-all text-xs lg:text-sm font-medium flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Template
+                    </button>
+                    <label class="flex-1 sm:flex-none px-4 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 hover:shadow-lg transition-all text-xs lg:text-sm font-medium flex items-center justify-center gap-2 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        Import
+                        <input type="file" id="importExcel" accept=".xlsx,.xls" class="hidden" onchange="importExcel(event)">
+                    </label>
+                    <button onclick="openModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg hover:shadow-lg hover:shadow-emerald-500/30 transition-all text-xs lg:text-sm font-medium">
+                        ➕ Tambah Siswa
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filter Section -->
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 lg:p-5 mb-6 border border-blue-100">
+                <div class="flex flex-col sm:flex-row gap-3 lg:gap-4">
+                    <input type="text" id="searchInput" placeholder="🔍 Cari NIS atau nama siswa..." 
+                        class="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base bg-white transition-all">
+                    <select id="kelasFilter" class="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm lg:text-base bg-white transition-all appearance-none cursor-pointer">
+                        <option value="">Semua Kelas</option>
+                        <option value="7A">7A</option>
+                        <option value="7B">7B</option>
+                        <option value="8A">8A</option>
+                        <option value="8B">8B</option>
+                        <option value="9A">9A</option>
+                        <option value="9B">9B</option>
+                    </select>
+                    <button onclick="loadSiswa()" class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all text-sm lg:text-base font-medium">
+                        Cari
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Table Section -->
+            <div class="overflow-x-auto -mx-6 lg:mx-0 rounded-xl border border-gray-200 mb-6">
+                <table class="w-full">
+                    <thead class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">NIS</th>
+                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Nama Lengkap</th>
+                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Kelas</th>
+                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">JK</th>
+                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-center text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="siswaTable" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination Section -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-200">
+                <div class="text-sm text-gray-600">
+                    Menampilkan <span id="showingStart" class="font-semibold text-gray-800">0</span> - <span id="showingEnd" class="font-semibold text-gray-800">0</span> dari <span id="totalData" class="font-semibold text-gray-800">0</span> data
+                </div>
+                <div class="flex gap-2" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-6 lg:p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
+            <h3 class="text-2xl lg:text-3xl font-bold mb-6" id="modalTitle">Tambah Siswa</h3>
+            <form id="siswaForm">
+                <input type="hidden" id="siswaId">
+                <div class="mb-5">
+                    <label class="block text-gray-700 font-semibold mb-2 text-sm">NIS</label>
+                    <input type="text" id="nis" required class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                </div>
+                <div class="mb-5">
+                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Nama Lengkap</label>
+                    <input type="text" id="nama_lengkap" required class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                </div>
+                <div class="mb-5">
+                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Kelas</label>
+                    <select id="kelas" required class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm appearance-none cursor-pointer bg-white">
+                        <option value="7A">7A</option>
+                        <option value="7B">7B</option>
+                        <option value="8A">8A</option>
+                        <option value="8B">8B</option>
+                        <option value="9A">9A</option>
+                        <option value="9B">9B</option>
+                    </select>
+                </div>
+                <div class="mb-5">
+                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Jenis Kelamin</label>
+                    <select id="jenis_kelamin" required class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm appearance-none cursor-pointer bg-white">
+                        <option value="L">Laki-laki</option>
+                        <option value="P">Perempuan</option>
+                    </select>
+                </div>
+                <div class="mb-5">
+                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Alamat</label>
+                    <textarea id="alamat" rows="2" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm resize-none"></textarea>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Status</label>
+                    <select id="status" required class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm appearance-none cursor-pointer bg-white">
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Non-aktif</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white py-2.5 rounded-lg hover:shadow-lg hover:shadow-emerald-500/30 transition-all font-medium">💾 Simpan</button>
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg hover:bg-gray-300 transition-all font-medium">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { checkAuth } from '../assets/js/auth.js';
+        import { api } from '../assets/js/api.js';
+        import { renderSidebar } from '../assets/components/sidebar.js';
+        import { renderNavbar } from '../assets/components/navbar.js';
+        import { showToast } from '../assets/components/toast.js';
+        import { confirmDelete } from '../assets/js/utils.js';
+
+        checkAuth();
+
+        document.getElementById('sidebar').innerHTML = renderSidebar();
+        document.getElementById('navbar').innerHTML = renderNavbar();
+        document.getElementById('pageTitle').textContent = 'Data Siswa';
+
+        let currentPage = 1;
+        const limit = 10;
+
+        window.loadSiswa = async (page = 1) => {
+            currentPage = page;
+            const search = document.getElementById('searchInput').value;
+            const kelas = document.getElementById('kelasFilter').value;
+            const offset = (page - 1) * limit;
+            const params = `?search=${search}&kelas=${kelas}&limit=${limit}&page=${page}`;
+            
+            try {
+                const response = await api.getSiswa(params);
+                const tbody = document.getElementById('siswaTable');
+                tbody.innerHTML = '';
+                
+                response.data.data.forEach(siswa => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-100 last:border-b-0">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">${siswa.nis}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">${siswa.nama_lengkap}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                    ${siswa.kelas}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">${siswa.jenis_kelamin === 'L' ? '👦 Laki-laki' : '👧 Perempuan'}</td>
+                            <td class="px-6 py-4 text-sm">
+                                <span class="px-3 py-1.5 rounded-full text-xs font-semibold ${siswa.status === 'aktif' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
+                                    ${siswa.status === 'aktif' ? '✓ Aktif' : '✗ Non-aktif'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex gap-2 justify-center">
+                                    <button onclick="editSiswa(${siswa.id})" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all hover:shadow-md" title="Edit Siswa">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <button onclick="deleteSiswa(${siswa.id})" class="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all hover:shadow-md" title="Hapus Siswa">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                // Update pagination info
+                const total = response.data.total;
+                const start = total > 0 ? offset + 1 : 0;
+                const end = Math.min(offset + limit, total);
+                document.getElementById('showingStart').textContent = start;
+                document.getElementById('showingEnd').textContent = end;
+                document.getElementById('totalData').textContent = total;
+                
+                // Render pagination buttons
+                const totalPages = Math.ceil(total / limit);
+                const paginationDiv = document.getElementById('pagination');
+                paginationDiv.innerHTML = '';
+                
+                if (totalPages > 1) {
+                    // Previous button
+                    if (page > 1) {
+                        paginationDiv.innerHTML += `<button onclick="loadSiswa(${page - 1})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">Prev</button>`;
+                    }
+                    
+                    // Page numbers
+                    for (let i = 1; i <= totalPages; i++) {
+                        if (i === page) {
+                            paginationDiv.innerHTML += `<button class="px-3 py-1 bg-green-600 text-white rounded text-sm">${i}</button>`;
+                        } else if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+                            paginationDiv.innerHTML += `<button onclick="loadSiswa(${i})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">${i}</button>`;
+                        } else if (i === page - 2 || i === page + 2) {
+                            paginationDiv.innerHTML += `<span class="px-2">...</span>`;
+                        }
+                    }
+                    
+                    // Next button
+                    if (page < totalPages) {
+                        paginationDiv.innerHTML += `<button onclick="loadSiswa(${page + 1})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">Next</button>`;
+                    }
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+
+        window.openModal = () => {
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modalTitle').textContent = 'Tambah Siswa';
+            document.getElementById('siswaForm').reset();
+            document.getElementById('siswaId').value = '';
+        };
+
+        window.closeModal = () => {
+            document.getElementById('modal').classList.add('hidden');
+        };
+
+        window.editSiswa = async (id) => {
+            try {
+                const response = await api.getSiswaById(id);
+                const siswa = response.data;
+                
+                document.getElementById('siswaId').value = siswa.id;
+                document.getElementById('nis').value = siswa.nis;
+                document.getElementById('nama_lengkap').value = siswa.nama_lengkap;
+                document.getElementById('kelas').value = siswa.kelas;
+                document.getElementById('jenis_kelamin').value = siswa.jenis_kelamin;
+                document.getElementById('alamat').value = siswa.alamat;
+                document.getElementById('status').value = siswa.status;
+                
+                document.getElementById('modalTitle').textContent = 'Edit Siswa';
+                document.getElementById('modal').classList.remove('hidden');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+
+        window.deleteSiswa = async (id) => {
+            if (!await confirmDelete()) return;
+            
+            try {
+                await api.deleteSiswa(id);
+                showToast('Siswa berhasil dihapus');
+                loadSiswa(currentPage);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+
+        document.getElementById('siswaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                nis: document.getElementById('nis').value,
+                nama_lengkap: document.getElementById('nama_lengkap').value,
+                kelas: document.getElementById('kelas').value,
+                jenis_kelamin: document.getElementById('jenis_kelamin').value,
+                alamat: document.getElementById('alamat').value,
+                status: document.getElementById('status').value
+            };
+            
+            const id = document.getElementById('siswaId').value;
+            
+            try {
+                if (id) {
+                    await api.updateSiswa(id, data);
+                    showToast('Siswa berhasil diupdate');
+                } else {
+                    await api.createSiswa(data);
+                    showToast('Siswa berhasil ditambahkan');
+                }
+                closeModal();
+                loadSiswa(currentPage);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+
+        // Download Template Excel
+        window.downloadTemplate = () => {
+            const wb = XLSX.utils.book_new();
+            
+            const data = [
+                ['NIS', 'Nama Lengkap', 'Kelas', 'Jenis Kelamin', 'Alamat', 'Status'],
+                ['2024006', 'Contoh Siswa 1', '7A', 'L', 'Jl. Contoh No. 1', 'aktif'],
+                ['2024007', 'Contoh Siswa 2', '7B', 'P', 'Jl. Contoh No. 2', 'aktif'],
+                ['2024008', 'Contoh Siswa 3', '8A', 'L', 'Jl. Contoh No. 3', 'aktif']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 10 },  // NIS
+                { wch: 25 },  // Nama Lengkap
+                { wch: 8 },   // Kelas
+                { wch: 15 },  // Jenis Kelamin
+                { wch: 30 },  // Alamat
+                { wch: 10 }   // Status
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'Data Siswa');
+            XLSX.writeFile(wb, 'Template_Import_Siswa.xlsx');
+            
+            showToast('Template berhasil didownload');
+        };
+
+        // Import Excel
+        window.importExcel = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first sheet
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    
+                    if (rows.length < 2) {
+                        showToast('File kosong atau format tidak valid', 'error');
+                        event.target.value = '';
+                        return;
+                    }
+                    
+                    let successCount = 0;
+                    let errorCount = 0;
+                    const errors = [];
+                    
+                    // Skip header (row 0)
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!row || row.length === 0) continue;
+                        
+                        const [nis, nama_lengkap, kelas, jenis_kelamin, alamat, status] = row;
+                        
+                        // Validation
+                        if (!nis || !nama_lengkap || !kelas || !jenis_kelamin) {
+                            errorCount++;
+                            errors.push(`Baris ${i + 1}: Data tidak lengkap`);
+                            continue;
+                        }
+                        
+                        const jk = String(jenis_kelamin).toUpperCase().trim();
+                        if (!['L', 'P'].includes(jk)) {
+                            errorCount++;
+                            errors.push(`Baris ${i + 1}: Jenis kelamin harus L atau P`);
+                            continue;
+                        }
+                        
+                        const statusValue = status ? String(status).toLowerCase().trim() : 'aktif';
+                        if (!['aktif', 'nonaktif'].includes(statusValue)) {
+                            errorCount++;
+                            errors.push(`Baris ${i + 1}: Status harus aktif atau nonaktif`);
+                            continue;
+                        }
+                        
+                        try {
+                            await api.createSiswa({
+                                nis: String(nis).trim(),
+                                nama_lengkap: String(nama_lengkap).trim(),
+                                kelas: String(kelas).trim(),
+                                jenis_kelamin: jk,
+                                alamat: alamat ? String(alamat).trim() : '',
+                                status: statusValue
+                            });
+                            successCount++;
+                        } catch (error) {
+                            errorCount++;
+                            errors.push(`Baris ${i + 1}: ${error.message}`);
+                        }
+                    }
+                    
+                    if (errors.length > 0 && errors.length <= 5) {
+                        console.log('Import errors:', errors);
+                    }
+                    
+                    showToast(`Import selesai: ${successCount} berhasil, ${errorCount} gagal`);
+                    loadSiswa(currentPage);
+                } catch (error) {
+                    showToast('Error membaca file: ' + error.message, 'error');
+                }
+                
+                event.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        loadSiswa();
+    </script>
+</body>
+</html>
