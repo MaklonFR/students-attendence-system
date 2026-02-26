@@ -1,37 +1,8 @@
-# Environment variables
+node_modules/
+.DS_Store
 .env
 .env.local
-.env.*.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Dependencies
-vendor/
-node_modules/
-
-# Logs
+.vercel
+dist/
+build/
 *.log
-
-# Compiled files
-*.class
-*.jar
-
-# OS files
-Thumbs.db
-.DS_Store
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Session files
-session/
-tmp/
-cache/
