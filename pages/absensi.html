@@ -142,23 +142,23 @@
                             <td class="px-6 py-4">
                                 <div class="flex flex-wrap gap-2 lg:gap-2.5">
                                     <!-- Hadir Checkbox -->
-                                    <label class="flex items-center gap-2 px-3.5 py-2 rounded-lg cursor-pointer transition-all ${status === 'hadir' ? 'bg-green-100 border-2 border-green-500 shadow-md shadow-green-200' : 'bg-gray-50 border-2 border-gray-200 hover:bg-green-50 hover:border-green-300'} group">
-                                        <input type="radio" name="status-${siswa.id}" value="hadir" class="status-radio w-5 h-5 accent-green-600 cursor-pointer" data-siswa-id="${siswa.id}" ${status === 'hadir' ? 'checked' : ''}>
+                                    <label class="status-label flex items-center gap-2 px-3.5 py-2 rounded-lg cursor-pointer transition-all ${status === 'hadir' ? 'bg-green-100 border-2 border-green-500 shadow-md shadow-green-200' : 'bg-gray-50 border-2 border-gray-200 hover:bg-green-50 hover:border-green-300'} group" data-status="hadir" data-siswa-id="${siswa.id}">
+                                        <input type="radio" name="status-${siswa.id}" value="hadir" class="status-radio w-5 h-5 accent-green-600 cursor-pointer hidden" data-siswa-id="${siswa.id}" ${status === 'hadir' ? 'checked' : ''}>
                                         <span class="font-semibold text-sm ${status === 'hadir' ? 'text-green-700' : 'text-gray-600 group-hover:text-green-600'}">✓ Hadir</span>
                                     </label>
                                     <!-- Izin Checkbox -->
-                                    <label class="flex items-center gap-2 px-3.5 py-2 rounded-lg cursor-pointer transition-all ${status === 'izin' ? 'bg-blue-100 border-2 border-blue-500 shadow-md shadow-blue-200' : 'bg-gray-50 border-2 border-gray-200 hover:bg-blue-50 hover:border-blue-300'} group">
-                                        <input type="radio" name="status-${siswa.id}" value="izin" class="status-radio w-5 h-5 accent-blue-600 cursor-pointer" data-siswa-id="${siswa.id}" ${status === 'izin' ? 'checked' : ''}>
+                                    <label class="status-label flex items-center gap-2 px-3.5 py-2 rounded-lg cursor-pointer transition-all ${status === 'izin' ? 'bg-blue-100 border-2 border-blue-500 shadow-md shadow-blue-200' : 'bg-gray-50 border-2 border-gray-200 hover:bg-blue-50 hover:border-blue-300'} group" data-status="izin" data-siswa-id="${siswa.id}">
+                                        <input type="radio" name="status-${siswa.id}" value="izin" class="status-radio w-5 h-5 accent-blue-600 cursor-pointer hidden" data-siswa-id="${siswa.id}" ${status === 'izin' ? 'checked' : ''}>
                                         <span class="font-semibold text-sm ${status === 'izin' ? 'text-blue-700' : 'text-gray-600 group-hover:text-blue-600'}">📋 Izin</span>
                                     </label>
                                     <!-- Sakit Checkbox -->
-                                    <label class="flex items-center gap-2 px-3.5 py-2 rounded-lg cursor-pointer transition-all ${status === 'sakit' ? 'bg-yellow-100 border-2 border-yellow-500 shadow-md shadow-yellow-200' : 'bg-gray-50 border-2 border-gray-200 hover:bg-yellow-50 hover:border-yellow-300'} group">
-                                        <input type="radio" name="status-${siswa.id}" value="sakit" class="status-radio w-5 h-5 accent-yellow-500 cursor-pointer" data-siswa-id="${siswa.id}" ${status === 'sakit' ? 'checked' : ''}>
+                                    <label class="status-label flex items-center gap-2 px-3.5 py-2 rounded-lg cursor-pointer transition-all ${status === 'sakit' ? 'bg-yellow-100 border-2 border-yellow-500 shadow-md shadow-yellow-200' : 'bg-gray-50 border-2 border-gray-200 hover:bg-yellow-50 hover:border-yellow-300'} group" data-status="sakit" data-siswa-id="${siswa.id}">
+                                        <input type="radio" name="status-${siswa.id}" value="sakit" class="status-radio w-5 h-5 accent-yellow-500 cursor-pointer hidden" data-siswa-id="${siswa.id}" ${status === 'sakit' ? 'checked' : ''}>
                                         <span class="font-semibold text-sm ${status === 'sakit' ? 'text-yellow-700' : 'text-gray-600 group-hover:text-yellow-600'}">🤒 Sakit</span>
                                     </label>
                                     <!-- Alpha Checkbox -->
-                                    <label class="flex items-center gap-2 px-3.5 py-2 rounded-lg cursor-pointer transition-all ${status === 'alpha' ? 'bg-red-100 border-2 border-red-500 shadow-md shadow-red-200' : 'bg-gray-50 border-2 border-gray-200 hover:bg-red-50 hover:border-red-300'} group">
-                                        <input type="radio" name="status-${siswa.id}" value="alpha" class="status-radio w-5 h-5 accent-red-600 cursor-pointer" data-siswa-id="${siswa.id}" ${status === 'alpha' ? 'checked' : ''}>
+                                    <label class="status-label flex items-center gap-2 px-3.5 py-2 rounded-lg cursor-pointer transition-all ${status === 'alpha' ? 'bg-red-100 border-2 border-red-500 shadow-md shadow-red-200' : 'bg-gray-50 border-2 border-gray-200 hover:bg-red-50 hover:border-red-300'} group" data-status="alpha" data-siswa-id="${siswa.id}">
+                                        <input type="radio" name="status-${siswa.id}" value="alpha" class="status-radio w-5 h-5 accent-red-600 cursor-pointer hidden" data-siswa-id="${siswa.id}" ${status === 'alpha' ? 'checked' : ''}>
                                         <span class="font-semibold text-sm ${status === 'alpha' ? 'text-red-700' : 'text-gray-600 group-hover:text-red-600'}">✗ Alpha</span>
                                     </label>
                                 </div>
@@ -171,10 +171,80 @@
                     `;
                 });
                 
+                // Add event listeners to status labels
+                attachStatusEventListeners();
+                
                 document.getElementById('siswaList').classList.remove('hidden');
             } catch (error) {
                 showToast(error.message, 'error');
             }
+        };
+
+        // Function to handle status selection and UI updates
+        const attachStatusEventListeners = () => {
+            const statusLabels = document.querySelectorAll('.status-label');
+            
+            statusLabels.forEach(label => {
+                label.addEventListener('click', (e) => {
+                    const siswaId = label.getAttribute('data-siswa-id');
+                    const newStatus = label.getAttribute('data-status');
+                    
+                    // Update the radio button
+                    const radio = label.querySelector('input[type="radio"]');
+                    if (radio) {
+                        radio.checked = true;
+                    }
+                    
+                    // Update absensiData
+                    if (!absensiData[siswaId]) {
+                        absensiData[siswaId] = {};
+                    }
+                    absensiData[siswaId].status = newStatus;
+                    
+                    // Update all status labels for this student
+                    const tr = label.closest('tr');
+                    const allLabels = tr.querySelectorAll('.status-label');
+                    
+                    allLabels.forEach(lbl => {
+                        const status = lbl.getAttribute('data-status');
+                        lbl.classList.remove(
+                            'bg-green-100', 'border-green-500', 'shadow-md', 'shadow-green-200',
+                            'bg-blue-100', 'border-blue-500', 'shadow-blue-200',
+                            'bg-yellow-100', 'border-yellow-500', 'shadow-yellow-200',
+                            'bg-red-100', 'border-red-500', 'shadow-red-200'
+                        );
+                        lbl.classList.add('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
+                        
+                        const span = lbl.querySelector('span');
+                        span.classList.remove('text-green-700', 'text-blue-700', 'text-yellow-700', 'text-red-700');
+                        span.classList.add('text-gray-600');
+                    });
+                    
+                    // Highlight selected label
+                    switch (newStatus) {
+                        case 'hadir':
+                            label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
+                            label.classList.add('bg-green-100', 'border-2', 'border-green-500', 'shadow-md', 'shadow-green-200');
+                            label.querySelector('span').classList.add('text-green-700');
+                            break;
+                        case 'izin':
+                            label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
+                            label.classList.add('bg-blue-100', 'border-2', 'border-blue-500', 'shadow-md', 'shadow-blue-200');
+                            label.querySelector('span').classList.add('text-blue-700');
+                            break;
+                        case 'sakit':
+                            label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
+                            label.classList.add('bg-yellow-100', 'border-2', 'border-yellow-500', 'shadow-md', 'shadow-yellow-200');
+                            label.querySelector('span').classList.add('text-yellow-700');
+                            break;
+                        case 'alpha':
+                            label.classList.remove('bg-gray-50', 'border-gray-200', 'hover:bg-gray-100', 'hover:border-gray-300');
+                            label.classList.add('bg-red-100', 'border-2', 'border-red-500', 'shadow-md', 'shadow-red-200');
+                            label.querySelector('span').classList.add('text-red-700');
+                            break;
+                    }
+                });
+            });
         };
 
         window.simpanAbsensi = async () => {
