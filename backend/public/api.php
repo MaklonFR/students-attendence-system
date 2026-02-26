@@ -3,9 +3,6 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 
-// Debug: Log incoming request
-// file_put_contents(__DIR__ . '/debug.log', date('Y-m-d H:i:s') . ' - ' . $_SERVER['REQUEST_METHOD'] . ' ' . $_SERVER['REQUEST_URI'] . PHP_EOL, FILE_APPEND);
-
 require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../core/Response.php';
@@ -22,10 +19,5 @@ require_once __DIR__ . '/../controllers/SiswaController.php';
 require_once __DIR__ . '/../controllers/AbsensiController.php';
 require_once __DIR__ . '/../controllers/LaporanController.php';
 require_once __DIR__ . '/../controllers/MonitoringController.php';
-
-// Handle route query parameter untuk frontend
-if (isset($_GET['route'])) {
-    $_SERVER['REQUEST_URI'] = '/public/' . $_GET['route'];
-}
 
 require_once __DIR__ . '/../routes/api.php';

@@ -1,14 +1,15 @@
 const API_CONFIG = {
-    BASE_URL: 'http://localhost:8000',
+    BASE_URL: 'https://absen.batucermin-desa.id/public',
     ENDPOINTS: {
-        LOGIN: '/api/login',
-        LOGOUT: '/api/logout',
-        USERS: '/api/users',
-        SISWA: '/api/siswa',
-        ABSENSI: '/api/absensi',
-        STATISTIK: '/api/statistik',
-        LAPORAN_HARIAN: '/api/laporan/harian',
-        LAPORAN_BULANAN: '/api/laporan/bulanan'
+        LOGIN: '/index.php?route=login',
+        LOGOUT: '/index.php?route=logout',
+        USERS: '/index.php?route=users',
+        SISWA: '/index.php?route=siswa',
+        ABSENSI: '/index.php?route=absensi',
+        STATISTIK: '/index.php?route=statistik',
+        LAPORAN_HARIAN: '/index.php?route=laporan/harian',
+        LAPORAN_BULANAN: '/index.php?route=laporan/bulanan',
+        STATUS: '/hello.php'
     }
 };
 

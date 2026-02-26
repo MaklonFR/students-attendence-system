@@ -6,8 +6,28 @@ class Request {
     }
 
     public static function getUri() {
-        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        return rtrim($uri, '/');
+        // Get the REQUEST_URI
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        
+        // Parse URL to get path only
+        $uri = parse_url($uri, PHP_URL_PATH);
+        
+        // Remove /public/ prefix
+        $uri = preg_replace('#^/public#', '', $uri);
+        
+        // Jika kosong, set ke /
+        if (empty($uri)) {
+            $uri = '/';
+        }
+        
+        $uri = rtrim($uri, '/') ?: '/';
+        
+        // Add /api prefix jika belum ada
+        if ($uri !== '/' && strpos($uri, '/api') !== 0 && !in_array($uri, ['/test.php', '/hello.php', '/status'])) {
+            $uri = '/api' . $uri;
+        }
+        
+        return $uri;
     }
 
     public static function getBody() {

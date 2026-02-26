@@ -5,6 +5,41 @@ $db = $database->connect();
 
 $router = new Router();
 
+// Status route
+$router->add('GET', '/api/status', function() use ($db) {
+    $response = new Response();
+    
+    $status = [
+        'status' => 'running',
+        'message' => 'Backend API Sistem Absensi SMP berjalan dengan baik',
+        'url' => 'https://absen.batucermin-desa.id',
+        'timestamp' => date('Y-m-d H:i:s'),
+        'php_version' => phpversion(),
+        'database_connected' => false,
+        'database_info' => null
+    ];
+    
+    // Test Database Connection
+    try {
+        if ($db) {
+            $status['database_connected'] = true;
+            
+            // Get database info
+            $stmt = $db->query("SELECT DATABASE() as db_name, VERSION() as db_version");
+            $db_info = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            $status['database_info'] = [
+                'database_name' => $db_info['db_name'],
+                'database_version' => $db_info['db_version']
+            ];
+        }
+    } catch (Exception $e) {
+        $status['database_error'] = $e->getMessage();
+    }
+    
+    $response->success($status);
+});
+
 // Auth routes
 $router->add('POST', '/api/login', function() use ($db) {
     $controller = new AuthController($db);

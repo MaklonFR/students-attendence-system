@@ -1,0 +1,13 @@
+{
+  "name": "absensi-smp-frontend",
+  "version": "1.0.0",
+  "description": "Frontend untuk Sistem Absensi SMP",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 3000",
+    "build": "echo 'Frontend static, no build needed'"
+  },
+  "keywords": ["absensi", "smp"],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,4 +1,22 @@
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Izinkan akses ke file fisik (test.php, index.php, dll)
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule .* - [L]
+    
+    # Izinkan akses ke folder fisik
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule .* - [L]
+    
+    # Cegah akses ke folder sensitif
+    RewriteRule ^(config|core|models|controllers|routes)/ - [F,L]
+    RewriteRule ^\.env$ - [F,L]
+    RewriteRule ^\.git - [F,L]
+    
+    # Redirect semua API request ke index.php
+    RewriteRule ^api/ index.php [QSA,L]
+</IfModule>
+
+# Disable directory listing
+Options -Indexes

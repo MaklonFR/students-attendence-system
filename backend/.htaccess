@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /absen/
+    
+    # Izinkan akses ke folder public
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule .* - [L]
+    
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule .* - [L]
+    
+    # Redirect semua request ke public/index.php
+    RewriteRule ^(.*)$ public/index.php [QSA,L]
+</IfModule>
+
+Options -Indexes
