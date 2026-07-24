@@ -87,5 +87,6 @@ export const api = {
     getStatistik: () => apiRequest(API_CONFIG.ENDPOINTS.STATISTIK),
     getLaporanHarian: (params = '') => apiRequest(`${API_CONFIG.ENDPOINTS.LAPORAN_HARIAN}${params}`),
     getLaporanBulanan: (params = '') => apiRequest(`${API_CONFIG.ENDPOINTS.LAPORAN_BULANAN}${params}`),
+    getLaporanSemester: (params = '') => apiRequest(`${API_CONFIG.ENDPOINTS.LAPORAN_SEMESTER}${params}`),
     getMonitoringWeekly: () => apiRequest('/api/monitoring/weekly')
 };

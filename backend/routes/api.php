@@ -135,6 +135,11 @@ $router->add('GET', '/api/laporan/bulanan', function() use ($db) {
     $controller->bulanan();
 });
 
+$router->add('GET', '/api/laporan/semester', function() use ($db) {
+    $controller = new LaporanController($db);
+    $controller->semester();
+});
+
 // Monitoring routes
 $router->add('GET', '/api/monitoring/weekly', function() use ($db) {
     $controller = new MonitoringController($db);

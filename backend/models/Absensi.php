@@ -66,12 +66,12 @@ class Absensi {
 
     public function getLaporanHarian($tanggal, $kelas = '') {
         $query = "SELECT 
-                    s.kelas,
-                    COUNT(DISTINCT s.id) as total_siswa,
-                    SUM(CASE WHEN a.status = 'hadir' THEN 1 ELSE 0 END) as hadir,
-                    SUM(CASE WHEN a.status = 'izin' THEN 1 ELSE 0 END) as izin,
-                    SUM(CASE WHEN a.status = 'sakit' THEN 1 ELSE 0 END) as sakit,
-                    SUM(CASE WHEN a.status = 'alpha' THEN 1 ELSE 0 END) as alpha
+                    s.id, s.nis, s.nama_lengkap, s.kelas,
+                    COALESCE(a.status, 'alpha') as status,
+                    CASE WHEN a.status = 'hadir' THEN 1 ELSE 0 END as hadir,
+                    CASE WHEN a.status = 'izin' THEN 1 ELSE 0 END as izin,
+                    CASE WHEN a.status = 'sakit' THEN 1 ELSE 0 END as sakit,
+                    CASE WHEN a.status = 'alpha' OR a.id IS NULL THEN 1 ELSE 0 END as alpha
                   FROM siswa s
                   LEFT JOIN absensi a ON s.id = a.siswa_id AND a.tanggal = :tanggal
                   WHERE s.status = 'aktif'";
@@ -80,7 +80,7 @@ class Absensi {
             $query .= " AND s.kelas = :kelas";
         }
         
-        $query .= " GROUP BY s.kelas ORDER BY s.kelas";
+        $query .= " ORDER BY s.nama_lengkap ASC";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':tanggal', $tanggal);
@@ -99,7 +99,8 @@ class Absensi {
                     SUM(CASE WHEN a.status = 'hadir' THEN 1 ELSE 0 END) as hadir,
                     SUM(CASE WHEN a.status = 'izin' THEN 1 ELSE 0 END) as izin,
                     SUM(CASE WHEN a.status = 'sakit' THEN 1 ELSE 0 END) as sakit,
-                    SUM(CASE WHEN a.status = 'alpha' THEN 1 ELSE 0 END) as alpha
+                    SUM(CASE WHEN a.status = 'alpha' THEN 1 ELSE 0 END) as alpha,
+                    GROUP_CONCAT(CONCAT(DATE_FORMAT(a.tanggal, '%d-%m-%Y'), ' (', UPPER(SUBSTRING(a.status, 1, 1)), SUBSTRING(a.status, 2), ')') ORDER BY a.tanggal ASC SEPARATOR ', ') as tanggal_absen
                   FROM siswa s
                   LEFT JOIN absensi a ON s.id = a.siswa_id 
                     AND MONTH(a.tanggal) = :bulan 
@@ -114,6 +115,41 @@ class Absensi {
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':bulan', $bulan);
+        $stmt->bindParam(':tahun', $tahun);
+        
+        if ($kelas) {
+            $stmt->bindParam(':kelas', $kelas);
+        }
+        
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function getLaporanSemester($semester, $tahun, $kelas = '') {
+        $query = "SELECT 
+                    s.id, s.nis, s.nama_lengkap, s.kelas,
+                    SUM(CASE WHEN a.status = 'hadir' THEN 1 ELSE 0 END) as hadir,
+                    SUM(CASE WHEN a.status = 'izin' THEN 1 ELSE 0 END) as izin,
+                    SUM(CASE WHEN a.status = 'sakit' THEN 1 ELSE 0 END) as sakit,
+                    SUM(CASE WHEN a.status = 'alpha' THEN 1 ELSE 0 END) as alpha
+                  FROM siswa s
+                  LEFT JOIN absensi a ON s.id = a.siswa_id";
+        
+        if ($semester == 1) {
+            $query .= " AND MONTH(a.tanggal) IN (7,8,9) AND YEAR(a.tanggal) = :tahun";
+        } else {
+            $query .= " AND MONTH(a.tanggal) IN (1,2,3,4,5,6) AND YEAR(a.tanggal) = :tahun";
+        }
+        
+        $query .= " WHERE s.status = 'aktif'";
+        
+        if ($kelas) {
+            $query .= " AND s.kelas = :kelas";
+        }
+        
+        $query .= " GROUP BY s.id ORDER BY s.nama_lengkap";
+        
+        $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':tahun', $tahun);
         
         if ($kelas) {

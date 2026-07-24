@@ -1,201 +1,387 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan - Absensi SMP</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
+
 <body class="bg-gradient-to-br from-blue-50 to-cyan-50">
     <div id="sidebar"></div>
     <div id="navbar"></div>
-    
-    <div class="lg:ml-64 p-4 lg:p-8">
-        <!-- Daily Report Section -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 lg:p-8 mb-8 border border-gray-100">
-            <div class="mb-8">
-                <h3 class="text-3xl lg:text-4xl font-bold text-gray-800">Laporan Harian</h3>
-                <p class="text-gray-500 mt-1">Abstraksi kehadiran siswa per hari</p>
+
+    <div class="lg:ml-64">
+        <main class="max-w-6xl mx-auto px-4 py-6 lg:px-8 lg:py-10">
+
+            <!-- ===== KOP LAPORAN (margin-top: 1) ===== -->
+            <div id="kopLaporan" class="bg-white rounded-2xl shadow-lg p-6 lg:p-8 mb-6 border border-gray-100"
+                style="margin-top: 1rem;">
+                <div class="flex items-start gap-4 border-b-2 border-blue-600 pb-4">
+                    <!-- Logo -->
+                    <div class="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+                        <img src="../assets/img/logo.png" alt="Logo Sekolah" class="w-full h-full object-contain"
+                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        <div
+                            class="hidden w-full h-full bg-blue-50 rounded-xl items-center justify-center border border-blue-200">
+                            <i class="fas fa-school text-3xl sm:text-4xl text-blue-600"></i>
+                        </div>
+                    </div>
+                    <!-- Identitas Sekolah -->
+                    <div class="flex-1 text-center sm:text-left">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-800 uppercase">SMP Swasta Beringin Kupang</h2>
+                        <div class="text-xs sm:text-sm text-gray-500 space-y-0.5 mt-1">
+                            <p><span class="font-semibold">NPSN:</span> 50305278</p>
+                            <p>Jl. Delima No. 12, Kelurahan Oepura, Kecamatan Maulafa</p>
+                            <p>Kota Kupang - Nusa Tenggara Timur</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Filter Section -->
-            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-5 lg:p-6 mb-6 border border-blue-100">
-                <div class="flex flex-col sm:flex-row gap-3 lg:gap-4 items-end">
-                    <div class="flex-1">
-                        <label class="block text-gray-700 font-semibold mb-2 text-sm">Tanggal</label>
-                        <input type="date" id="tanggalHarian" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white transition-all">
-                    </div>
-                    <div class="flex-1">
-                        <label class="block text-gray-700 font-semibold mb-2 text-sm">Kelas</label>
-                        <select id="kelasHarian" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white transition-all appearance-none cursor-pointer">
-                            <option value="">Semua Kelas</option>
-                            <option value="7A">7A</option>
-                            <option value="7B">7B</option>
-                            <option value="8A">8A</option>
-                            <option value="8B">8B</option>
-                            <option value="9A">9A</option>
-                            <option value="9B">9B</option>
-                        </select>
-                    </div>
-                    <button onclick="loadLaporanHarian()" class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all font-medium">
-                        Tampilkan
+
+            <!-- Tabs Navigation -->
+            <div class="mb-8">
+                <div class="flex gap-4 border-b border-gray-300 overflow-x-auto">
+                    <button onclick="switchTab('harian')" id="tabHarian"
+                        class="px-6 py-3 font-semibold text-gray-700 border-b-2 border-blue-600 transition-all whitespace-nowrap">
+                        📅 Laporan Harian
+                    </button>
+                    <button onclick="switchTab('bulanan')" id="tabBulanan"
+                        class="px-6 py-3 font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent transition-all whitespace-nowrap">
+                        📊 Laporan Bulanan
+                    </button>
+                    <button onclick="switchTab('semester')" id="tabSemester"
+                        class="px-6 py-3 font-semibold text-gray-500 hover:text-gray-700 border-b-2 border-transparent transition-all whitespace-nowrap">
+                        📈 Laporan Semester
                     </button>
                 </div>
             </div>
-            
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-2 mb-6">
-                <button onclick="printLaporanHarian()" class="flex-1 sm:flex-none px-4 py-2.5 bg-slate-600 text-white rounded-lg hover:bg-slate-700 hover:shadow-lg transition-all text-xs lg:text-sm font-medium flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                    </svg>
-                    Cetak
-                </button>
-                <button onclick="exportExcelHarian()" class="flex-1 sm:flex-none px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:shadow-lg transition-all text-xs lg:text-sm font-medium flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Excel
-                </button>
-                <button onclick="exportPDFHarian()" class="flex-1 sm:flex-none px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 hover:shadow-lg transition-all text-xs lg:text-sm font-medium flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                    </svg>
-                    PDF
-                </button>
-            </div>
-            
-            <!-- Table Section -->
-            <div class="overflow-x-auto -mx-6 lg:mx-0 rounded-xl border border-gray-200 mb-6">
-                <table class="w-full">
-                    <thead class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Kelas</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Total Siswa</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Hadir</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Izin</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Sakit</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Alpha</th>
-                        </tr>
-                    </thead>
-                    <tbody id="laporanHarianTable" class="divide-y divide-gray-200"></tbody>
-                </table>
-            </div>
-            
-            <!-- Pagination -->
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-200">
-                <div class="text-sm text-gray-600">
-                    Menampilkan <span id="showingStartHarian" class="font-semibold">0</span> - <span id="showingEndHarian" class="font-semibold">0</span> dari <span id="totalDataHarian" class="font-semibold">0</span> data
+
+            <!-- ===== LAPORAN HARIAN ===== -->
+            <div id="sectionHarian" class="bg-white rounded-2xl shadow-lg p-6 lg:p-8 mb-8 border border-gray-100">
+                <div class="mb-6">
+                    <h3 class="text-2xl lg:text-3xl font-bold text-gray-800">Laporan Harian</h3>
+                    <p class="text-gray-500 mt-1 text-sm">Detail kehadiran siswa per hari</p>
                 </div>
-                <div class="flex gap-2" id="paginationHarian"></div>
-            </div>
-        </div>
-        
-        <!-- Monthly Report Section -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 lg:p-8 border border-gray-100">
-            <div class="mb-8">
-                <h3 class="text-3xl lg:text-4xl font-bold text-gray-800">Laporan Bulanan</h3>
-                <p class="text-gray-500 mt-1">Detail kehadiran siswa per bulan</p>
-            </div>
-            
-            <!-- Filter Section -->
-            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-5 lg:p-6 mb-6 border border-blue-100">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-                    <div>
-                        <label class="block text-gray-700 font-semibold mb-2 text-sm">Bulan</label>
-                        <select id="bulan" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white transition-all appearance-none cursor-pointer">
-                            <option value="1">Januari</option>
-                            <option value="2">Februari</option>
-                            <option value="3">Maret</option>
-                            <option value="4">April</option>
-                            <option value="5">Mei</option>
-                            <option value="6">Juni</option>
-                            <option value="7">Juli</option>
-                            <option value="8">Agustus</option>
-                            <option value="9">September</option>
-                            <option value="10">Oktober</option>
-                            <option value="11">November</option>
-                            <option value="12">Desember</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 font-semibold mb-2 text-sm">Tahun</label>
-                        <input type="number" id="tahun" value="2024" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white transition-all">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 font-semibold mb-2 text-sm">Kelas</label>
-                        <select id="kelasBulanan" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white transition-all appearance-none cursor-pointer">
-                            <option value="">Semua Kelas</option>
-                            <option value="7A">7A</option>
-                            <option value="7B">7B</option>
-                            <option value="8A">8A</option>
-                            <option value="8B">8B</option>
-                            <option value="9A">9A</option>
-                            <option value="9B">9B</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end">
-                        <button onclick="loadLaporanBulanan()" class="w-full px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all font-medium">
-                            Tampilkan
+
+                <!-- Filter -->
+                <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 lg:p-5 mb-6 border border-blue-100">
+                    <div class="flex flex-col sm:flex-row gap-3 items-end">
+                        <div class="flex-1">
+                            <label class="block text-gray-700 font-semibold mb-1.5 text-xs">Tanggal</label>
+                            <input type="date" id="tanggalHarian"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-gray-700 font-semibold mb-1.5 text-xs">Kelas</label>
+                            <select id="kelasHarian"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white appearance-none cursor-pointer">
+                                <option value="">Semua Kelas</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-gray-700 font-semibold mb-1.5 text-xs">Cari Siswa</label>
+                            <input type="text" id="searchHarian" placeholder="Nama atau NIS..."
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                        </div>
+                        <button onclick="loadLaporanHarian()"
+                            class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg hover:shadow-lg transition-all font-medium text-sm whitespace-nowrap">
+                            <i class="fas fa-search mr-1"></i> Tampilkan
                         </button>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-2 mb-6">
-                <button onclick="printLaporanBulanan()" class="flex-1 sm:flex-none px-4 py-2.5 bg-slate-600 text-white rounded-lg hover:bg-slate-700 hover:shadow-lg transition-all text-xs lg:text-sm font-medium flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                    </svg>
-                    Cetak
-                </button>
-                <button onclick="exportExcelBulanan()" class="flex-1 sm:flex-none px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:shadow-lg transition-all text-xs lg:text-sm font-medium flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Excel
-                </button>
-                <button onclick="exportPDFBulanan()" class="flex-1 sm:flex-none px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 hover:shadow-lg transition-all text-xs lg:text-sm font-medium flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                    </svg>
-                    PDF
-                </button>
-            </div>
-            
-            <!-- Table Section -->
-            <div class="overflow-x-auto -mx-6 lg:mx-0 rounded-xl border border-gray-200 mb-6">
-                <table class="w-full">
-                    <thead class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">NIS</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Nama Siswa</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Kelas</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Hadir</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Izin</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Sakit</th>
-                            <th class="px-6 py-4 text-left text-xs lg:text-sm font-bold text-gray-700 uppercase tracking-wider">Alpha</th>
-                        </tr>
-                    </thead>
-                    <tbody id="laporanBulananTable" class="divide-y divide-gray-200"></tbody>
-                </table>
-            </div>
-            
-            <!-- Pagination -->
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-200">
-                <div class="text-sm text-gray-600">
-                    Menampilkan <span id="showingStartBulanan" class="font-semibold">0</span> - <span id="showingEndBulanan" class="font-semibold">0</span> dari <span id="totalDataBulanan" class="font-semibold">0</span> data
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button onclick="printLaporanHarian()"
+                        class="px-3 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all text-xs font-medium flex items-center gap-1.5">
+                        <i class="fas fa-print"></i> Cetak
+                    </button>
+                    <button onclick="exportExcelHarian()"
+                        class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all text-xs font-medium flex items-center gap-1.5">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                    <button onclick="exportPDFHarian()"
+                        class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-xs font-medium flex items-center gap-1.5">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
                 </div>
-                <div class="flex gap-2" id="paginationBulanan"></div>
+
+                <!-- Loading -->
+                <div id="loadingHarian" class="hidden text-center py-8">
+                    <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                        </path>
+                    </svg>
+                    <p class="text-gray-500 mt-2 text-sm">Memuat data...</p>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto rounded-xl border border-gray-200 mb-4">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                            <tr>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase w-10">No</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-bold uppercase">NIS</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-bold uppercase">Nama Siswa</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase">Kelas</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-green-600">Hadir</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-amber-500">Izin</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-sky-500">Sakit</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-red-500">Alpha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="laporanHarianTable" class="divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+
+                <!-- Summary -->
+                <div id="harianSummary" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                    <div class="bg-green-50 rounded-xl p-3 text-center border border-green-200">
+                        <div class="text-xl font-bold text-green-600" id="harianTotalHadir">0</div>
+                        <div class="text-xs text-gray-500">Hadir</div>
+                    </div>
+                    <div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-200">
+                        <div class="text-xl font-bold text-amber-600" id="harianTotalIzin">0</div>
+                        <div class="text-xs text-gray-500">Izin</div>
+                    </div>
+                    <div class="bg-sky-50 rounded-xl p-3 text-center border border-sky-200">
+                        <div class="text-xl font-bold text-sky-600" id="harianTotalSakit">0</div>
+                        <div class="text-xs text-gray-500">Sakit</div>
+                    </div>
+                    <div class="bg-red-50 rounded-xl p-3 text-center border border-red-200">
+                        <div class="text-xl font-bold text-red-600" id="harianTotalAlpha">0</div>
+                        <div class="text-xs text-gray-500">Alpha</div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-3 border-t border-gray-200">
+                    <div class="text-xs text-gray-500">
+                        Menampilkan <span id="showingStartHarian" class="font-semibold">0</span> - <span
+                            id="showingEndHarian" class="font-semibold">0</span> dari <span id="totalDataHarian"
+                            class="font-semibold">0</span> siswa
+                    </div>
+                    <div class="flex gap-1.5" id="paginationHarian"></div>
+                </div>
             </div>
-        </div>
+
+            <!-- ===== LAPORAN BULANAN ===== -->
+            <div id="sectionBulanan"
+                class="hidden bg-white rounded-2xl shadow-lg p-6 lg:p-8 mb-8 border border-gray-100">
+                <div class="mb-6">
+                    <h3 class="text-2xl lg:text-3xl font-bold text-gray-800">Laporan Bulanan</h3>
+                    <p class="text-gray-500 mt-1 text-sm">Detail kehadiran siswa per bulan</p>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 lg:p-5 mb-6 border border-blue-100">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1.5 text-xs">Bulan</label>
+                            <select id="bulan"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white appearance-none cursor-pointer">
+                                <option value="1">Januari</option>
+                                <option value="2">Februari</option>
+                                <option value="3">Maret</option>
+                                <option value="4">April</option>
+                                <option value="5">Mei</option>
+                                <option value="6">Juni</option>
+                                <option value="7">Juli</option>
+                                <option value="8">Agustus</option>
+                                <option value="9">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1.5 text-xs">Tahun</label>
+                            <input type="number" id="tahun"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1.5 text-xs">Kelas</label>
+                            <select id="kelasBulanan"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white appearance-none cursor-pointer">
+                                <option value="">Semua Kelas</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="loadLaporanBulanan()"
+                                class="w-full px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg hover:shadow-lg transition-all font-medium text-sm">
+                                <i class="fas fa-search mr-1"></i> Tampilkan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button onclick="printLaporanBulanan()"
+                        class="px-3 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all text-xs font-medium flex items-center gap-1.5">
+                        <i class="fas fa-print"></i> Cetak
+                    </button>
+                    <button onclick="exportExcelBulanan()"
+                        class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all text-xs font-medium flex items-center gap-1.5">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                    <button onclick="exportPDFBulanan()"
+                        class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-xs font-medium flex items-center gap-1.5">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                </div>
+
+                <div id="loadingBulanan" class="hidden text-center py-8">
+                    <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                        </path>
+                    </svg>
+                    <p class="text-gray-500 mt-2 text-sm">Memuat data...</p>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-gray-200 mb-4">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                            <tr>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase w-10">No</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-bold uppercase">NIS</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-bold uppercase">Nama Siswa</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase">Kelas</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-green-600">Hadir</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-amber-500">Izin</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-sky-500">Sakit</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-red-500">Alpha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="laporanBulananTable" class="divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-3 border-t border-gray-200">
+                    <div class="text-xs text-gray-500">
+                        Menampilkan <span id="showingStartBulanan" class="font-semibold">0</span> - <span
+                            id="showingEndBulanan" class="font-semibold">0</span> dari <span id="totalDataBulanan"
+                            class="font-semibold">0</span> siswa
+                    </div>
+                    <div class="flex gap-1.5" id="paginationBulanan"></div>
+                </div>
+            </div>
+
+            <!-- ===== LAPORAN SEMESTER ===== -->
+            <div id="sectionSemester" class="hidden bg-white rounded-2xl shadow-lg p-6 lg:p-8 border border-gray-100">
+                <div class="mb-6">
+                    <h3 class="text-2xl lg:text-3xl font-bold text-gray-800">Laporan Semester</h3>
+                    <p class="text-gray-500 mt-1 text-sm">Rekap kehadiran siswa per semester</p>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 lg:p-5 mb-6 border border-blue-100">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1.5 text-xs">Semester</label>
+                            <select id="semester"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white appearance-none cursor-pointer">
+                                <option value="1">Semester 1 (Jan - Jun)</option>
+                                <option value="2">Semester 2 (Jul - Des)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1.5 text-xs">Tahun</label>
+                            <input type="number" id="tahunSemester"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1.5 text-xs">Kelas</label>
+                            <select id="kelasSemester"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white appearance-none cursor-pointer">
+                                <option value="">Semua Kelas</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="loadLaporanSemester()"
+                                class="w-full px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg hover:shadow-lg transition-all font-medium text-sm">
+                                <i class="fas fa-search mr-1"></i> Tampilkan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button onclick="printLaporanSemester()"
+                        class="px-3 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all text-xs font-medium flex items-center gap-1.5">
+                        <i class="fas fa-print"></i> Cetak
+                    </button>
+                    <button onclick="exportExcelSemester()"
+                        class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all text-xs font-medium flex items-center gap-1.5">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                    <button onclick="exportPDFSemester()"
+                        class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-xs font-medium flex items-center gap-1.5">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                </div>
+
+                <div id="loadingSemester" class="hidden text-center py-8">
+                    <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                        </path>
+                    </svg>
+                    <p class="text-gray-500 mt-2 text-sm">Memuat data...</p>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-gray-200 mb-4">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                            <tr>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase w-10">No</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-bold uppercase">NIS</th>
+                                <th class="px-3 py-2.5 text-left text-xs font-bold uppercase">Nama Siswa</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase">Kelas</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-green-600">Hadir</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-amber-500">Izin</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-sky-500">Sakit</th>
+                                <th class="px-3 py-2.5 text-center text-xs font-bold uppercase bg-red-500">Alpha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="laporanSemesterTable" class="divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-3 border-t border-gray-200">
+                    <div class="text-xs text-gray-500">
+                        Menampilkan <span id="showingStartSemester" class="font-semibold">0</span> - <span
+                            id="showingEndSemester" class="font-semibold">0</span> dari <span id="totalDataSemester"
+                            class="font-semibold">0</span> siswa
+                    </div>
+                    <div class="flex gap-1.5" id="paginationSemester"></div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
     <script type="module">
-        import { checkAuth } from '../assets/js/auth.js';
+        import { checkAuth, getUser } from '../assets/js/auth.js';
         import { api } from '../assets/js/api.js';
         import { renderSidebar } from '../assets/components/sidebar.js';
         import { renderNavbar } from '../assets/components/navbar.js';
@@ -206,393 +392,927 @@
 
         document.getElementById('sidebar').innerHTML = renderSidebar();
         document.getElementById('navbar').innerHTML = renderNavbar();
-        document.getElementById('pageTitle').textContent = 'Laporan';
-        
+
         const today = new Date();
         document.getElementById('tanggalHarian').value = formatDate(today);
         document.getElementById('bulan').value = today.getMonth() + 1;
         document.getElementById('tahun').value = today.getFullYear();
+        document.getElementById('tahunSemester').value = today.getFullYear();
 
-        let currentPageHarian = 1;
-        let currentPageBulanan = 1;
+        let currentPageHarian = 1, currentPageBulanan = 1, currentPageSemester = 1;
         const limit = 10;
 
+        // ===== TAB SWITCHING =====
+        window.switchTab = (tabName) => {
+            ['sectionHarian', 'sectionBulanan', 'sectionSemester'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['tabHarian', 'tabBulanan', 'tabSemester'].forEach(id => {
+                document.getElementById(id).classList.remove('border-blue-600', 'text-gray-700');
+                document.getElementById(id).classList.add('text-gray-500');
+            });
+            const sectionMap = { harian: 'sectionHarian', bulanan: 'sectionBulanan', semester: 'sectionSemester' };
+            const tabMap = { harian: 'tabHarian', bulanan: 'tabBulanan', semester: 'tabSemester' };
+            document.getElementById(sectionMap[tabName]).classList.remove('hidden');
+            document.getElementById(tabMap[tabName]).classList.remove('text-gray-500');
+            document.getElementById(tabMap[tabName]).classList.add('text-gray-700', 'border-blue-600');
+        };
+
+        // ===== HELPER: Render table rows =====
+        function renderRows(tbodyId, data, offset) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-gray-400"><i class="fas fa-inbox text-2xl mb-2 block"></i>Tidak ada data</td></tr>`;
+                return;
+            }
+            data.forEach((item, idx) => {
+                const rowNum = offset + idx + 1;
+                const bg = (offset + idx) % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                const nis = item.nis || item.nis_siswa || '-';
+                const nama = item.nama || item.nama_lengkap || item.nama_siswa || '-';
+                const kelas = item.kelas || '-';
+                const hadir = parseInt(item.hadir || 0);
+                const izin = parseInt(item.izin || 0);
+                const sakit = parseInt(item.sakit || 0);
+                const alpha = parseInt(item.alpha || 0);
+                tbody.innerHTML += `
+                    <tr class="${bg} hover:bg-blue-50/50 transition-colors border-b border-gray-100">
+                        <td class="px-3 py-2.5 text-center text-sm text-gray-600">${rowNum}</td>
+                        <td class="px-3 py-2.5 text-sm text-gray-700 font-mono">${nis}</td>
+                        <td class="px-3 py-2.5 text-sm font-medium text-gray-800">${nama}</td>
+                        <td class="px-3 py-2.5 text-center"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">${kelas}</span></td>
+                        <td class="px-3 py-2.5 text-center"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">${hadir}</span></td>
+                        <td class="px-3 py-2.5 text-center"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">${izin}</span></td>
+                        <td class="px-3 py-2.5 text-center"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-700">${sakit}</span></td>
+                        <td class="px-3 py-2.5 text-center"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">${alpha}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // ===== HELPER: Pagination =====
+        function renderPagination(containerId, total, page, loadFn) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const totalPages = Math.ceil(total / limit);
+            if (totalPages <= 1) return;
+            if (page > 1) container.innerHTML += `<button onclick="${loadFn}(${page - 1})" class="px-2.5 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-xs"><i class="fas fa-chevron-left"></i></button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+                    container.innerHTML += `<button onclick="${loadFn}(${i})" class="px-2.5 py-1.5 text-xs rounded-lg font-medium ${i === page ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-200 hover:bg-gray-300'}">${i}</button>`;
+                } else if (i === page - 2 || i === page + 2) {
+                    container.innerHTML += `<span class="px-1 text-gray-400 text-xs">...</span>`;
+                }
+            }
+            if (page < totalPages) container.innerHTML += `<button onclick="${loadFn}(${page + 1})" class="px-2.5 py-1.5 bg-gray-200 rounded-lg hover:bg-gray-300 text-xs"><i class="fas fa-chevron-right"></i></button>`;
+        }
+
+        // ===== LAPORAN HARIAN (Real-time from API) =====
         window.loadLaporanHarian = async (page = 1) => {
             currentPageHarian = page;
             const tanggal = document.getElementById('tanggalHarian').value;
             const kelas = document.getElementById('kelasHarian').value;
-            const params = `?tanggal=${tanggal}&kelas=${kelas}`;
-            
+            const search = document.getElementById('searchHarian').value.trim();
+
+            document.getElementById('loadingHarian').classList.remove('hidden');
+
             try {
+                let params = `?tanggal=${tanggal}&kelas=${kelas}`;
+                if (search) params += `&search=${encodeURIComponent(search)}`;
+
                 const response = await api.getLaporanHarian(params);
-                const allData = response.data;
+                const allData = response.data || [];
                 const total = allData.length;
                 const offset = (page - 1) * limit;
                 const data = allData.slice(offset, offset + limit);
-                
-                const tbody = document.getElementById('laporanHarianTable');
-                tbody.innerHTML = '';
-                
-                let totalSiswa = 0, totalHadir = 0, totalIzin = 0, totalSakit = 0, totalAlpha = 0;
-                
+
+                renderRows('laporanHarianTable', data, offset);
+
+                // Summary
+                let th = 0, ti = 0, ts = 0, ta = 0;
                 allData.forEach(item => {
-                    totalSiswa += parseInt(item.total_siswa);
-                    totalHadir += parseInt(item.hadir || 0);
-                    totalIzin += parseInt(item.izin || 0);
-                    totalSakit += parseInt(item.sakit || 0);
-                    totalAlpha += parseInt(item.alpha || 0);
+                    th += parseInt(item.hadir || 0);
+                    ti += parseInt(item.izin || 0);
+                    ts += parseInt(item.sakit || 0);
+                    ta += parseInt(item.alpha || 0);
                 });
-                
-                data.forEach(item => {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-100 last:border-b-0">
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">${item.kelas}</td>
-                            <td class="px-6 py-4 text-sm text-gray-700">${item.total_siswa}</td>
-                            <td class="px-6 py-4 text-sm text-green-600 font-bold">${item.hadir || 0}</td>
-                            <td class="px-6 py-4 text-sm text-blue-600 font-bold">${item.izin || 0}</td>
-                            <td class="px-6 py-4 text-sm text-yellow-600 font-bold">${item.sakit || 0}</td>
-                            <td class="px-6 py-4 text-sm text-red-600 font-bold">${item.alpha || 0}</td>
-                        </tr>
-                    `;
-                });
-                
-                tbody.innerHTML += `
-                    <tr class="bg-gradient-to-r from-gray-100 to-gray-50 font-bold border-t-2 border-gray-300">
-                        <td class="px-6 py-4 text-sm text-gray-900">TOTAL</td>
-                        <td class="px-6 py-4 text-sm text-gray-900">${totalSiswa}</td>
-                        <td class="px-6 py-4 text-sm text-green-600">${totalHadir}</td>
-                        <td class="px-6 py-4 text-sm text-blue-600">${totalIzin}</td>
-                        <td class="px-6 py-4 text-sm text-yellow-600">${totalSakit}</td>
-                        <td class="px-6 py-4 text-sm text-red-600">${totalAlpha}</td>
-                    </tr>
-                `;
-                
-                // Update pagination info
-                const start = total > 0 ? offset + 1 : 0;
-                const end = Math.min(offset + limit, total);
-                document.getElementById('showingStartHarian').textContent = start;
-                document.getElementById('showingEndHarian').textContent = end;
+                document.getElementById('harianSummary').classList.remove('hidden');
+                document.getElementById('harianTotalHadir').textContent = th;
+                document.getElementById('harianTotalIzin').textContent = ti;
+                document.getElementById('harianTotalSakit').textContent = ts;
+                document.getElementById('harianTotalAlpha').textContent = ta;
+
+                document.getElementById('showingStartHarian').textContent = total > 0 ? offset + 1 : 0;
+                document.getElementById('showingEndHarian').textContent = Math.min(offset + limit, total);
                 document.getElementById('totalDataHarian').textContent = total;
-                
-                // Render pagination
-                const totalPages = Math.ceil(total / limit);
-                const paginationDiv = document.getElementById('paginationHarian');
-                paginationDiv.innerHTML = '';
-                
-                if (totalPages > 1) {
-                    if (page > 1) {
-                        paginationDiv.innerHTML += `<button onclick="loadLaporanHarian(${page - 1})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">Prev</button>`;
-                    }
-                    for (let i = 1; i <= totalPages; i++) {
-                        if (i === page) {
-                            paginationDiv.innerHTML += `<button class="px-3 py-1 bg-green-600 text-white rounded text-sm">${i}</button>`;
-                        } else if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
-                            paginationDiv.innerHTML += `<button onclick="loadLaporanHarian(${i})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">${i}</button>`;
-                        } else if (i === page - 2 || i === page + 2) {
-                            paginationDiv.innerHTML += `<span class="px-2">...</span>`;
-                        }
-                    }
-                    if (page < totalPages) {
-                        paginationDiv.innerHTML += `<button onclick="loadLaporanHarian(${page + 1})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">Next</button>`;
-                    }
-                }
+
+                renderPagination('paginationHarian', total, page, 'loadLaporanHarian');
             } catch (error) {
-                showToast(error.message, 'error');
+                showToast('Gagal memuat laporan harian: ' + error.message, 'error');
             }
+            document.getElementById('loadingHarian').classList.add('hidden');
         };
 
+        // ===== LAPORAN BULANAN (Real-time from API) =====
         window.loadLaporanBulanan = async (page = 1) => {
             currentPageBulanan = page;
             const bulan = document.getElementById('bulan').value;
             const tahun = document.getElementById('tahun').value;
             const kelas = document.getElementById('kelasBulanan').value;
-            const params = `?bulan=${bulan}&tahun=${tahun}&kelas=${kelas}`;
-            
+
+            document.getElementById('loadingBulanan').classList.remove('hidden');
+
             try {
+                const params = `?bulan=${bulan}&tahun=${tahun}&kelas=${kelas}`;
                 const response = await api.getLaporanBulanan(params);
-                const allData = response.data;
+                const allData = response.data || [];
+                window.laporanBulananDataAll = allData; // Store globally for custom PDF export
                 const total = allData.length;
                 const offset = (page - 1) * limit;
                 const data = allData.slice(offset, offset + limit);
-                
-                const tbody = document.getElementById('laporanBulananTable');
-                tbody.innerHTML = '';
-                
-                let totalHadir = 0, totalIzin = 0, totalSakit = 0, totalAlpha = 0;
-                
-                allData.forEach(item => {
-                    totalHadir += parseInt(item.hadir || 0);
-                    totalIzin += parseInt(item.izin || 0);
-                    totalSakit += parseInt(item.sakit || 0);
-                    totalAlpha += parseInt(item.alpha || 0);
-                });
-                
-                data.forEach(item => {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-100 last:border-b-0">
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">${item.nis}</td>
-                            <td class="px-6 py-4 text-sm text-gray-700">${item.nama_lengkap}</td>
-                            <td class="px-6 py-4 text-sm text-gray-700">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                    ${item.kelas}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-green-600 font-bold">${item.hadir || 0}</td>
-                            <td class="px-6 py-4 text-sm text-blue-600 font-bold">${item.izin || 0}</td>
-                            <td class="px-6 py-4 text-sm text-yellow-600 font-bold">${item.sakit || 0}</td>
-                            <td class="px-6 py-4 text-sm text-red-600 font-bold">${item.alpha || 0}</td>
-                        </tr>
-                    `;
-                });
-                
-                tbody.innerHTML += `
-                    <tr class="bg-gradient-to-r from-gray-100 to-gray-50 font-bold border-t-2 border-gray-300">
-                        <td colspan="3" class="px-6 py-4 text-sm text-gray-900 text-right">TOTAL</td>
-                        <td class="px-6 py-4 text-sm text-green-600">${totalHadir}</td>
-                        <td class="px-6 py-4 text-sm text-blue-600">${totalIzin}</td>
-                        <td class="px-6 py-4 text-sm text-yellow-600">${totalSakit}</td>
-                        <td class="px-6 py-4 text-sm text-red-600">${totalAlpha}</td>
-                    </tr>
-                `;
-                
-                // Update pagination info
-                const start = total > 0 ? offset + 1 : 0;
-                const end = Math.min(offset + limit, total);
-                document.getElementById('showingStartBulanan').textContent = start;
-                document.getElementById('showingEndBulanan').textContent = end;
+
+                renderRows('laporanBulananTable', data, offset);
+
+                document.getElementById('showingStartBulanan').textContent = total > 0 ? offset + 1 : 0;
+                document.getElementById('showingEndBulanan').textContent = Math.min(offset + limit, total);
                 document.getElementById('totalDataBulanan').textContent = total;
-                
-                // Render pagination
-                const totalPages = Math.ceil(total / limit);
-                const paginationDiv = document.getElementById('paginationBulanan');
-                paginationDiv.innerHTML = '';
-                
-                if (totalPages > 1) {
-                    if (page > 1) {
-                        paginationDiv.innerHTML += `<button onclick="loadLaporanBulanan(${page - 1})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">Prev</button>`;
+
+                renderPagination('paginationBulanan', total, page, 'loadLaporanBulanan');
+            } catch (error) {
+                showToast('Gagal memuat laporan bulanan: ' + error.message, 'error');
+            }
+            document.getElementById('loadingBulanan').classList.add('hidden');
+        };
+
+        // ===== LAPORAN SEMESTER (Real-time from API) =====
+        window.loadLaporanSemester = async (page = 1) => {
+            currentPageSemester = page;
+            const semester = document.getElementById('semester').value;
+            const tahun = document.getElementById('tahunSemester').value;
+            const kelas = document.getElementById('kelasSemester').value;
+
+            document.getElementById('loadingSemester').classList.remove('hidden');
+
+            try {
+                const params = `?semester=${semester}&tahun=${tahun}&kelas=${kelas}`;
+                const response = await api.getLaporanSemester(params);
+                const allData = response.data || [];
+                const total = allData.length;
+                const offset = (page - 1) * limit;
+                const data = allData.slice(offset, offset + limit);
+
+                renderRows('laporanSemesterTable', data, offset);
+
+                document.getElementById('showingStartSemester').textContent = total > 0 ? offset + 1 : 0;
+                document.getElementById('showingEndSemester').textContent = Math.min(offset + limit, total);
+                document.getElementById('totalDataSemester').textContent = total;
+
+                renderPagination('paginationSemester', total, page, 'loadLaporanSemester');
+            } catch (error) {
+                showToast('Gagal memuat laporan semester: ' + error.message, 'error');
+            }
+            document.getElementById('loadingSemester').classList.add('hidden');
+        };
+
+        // ===== PRINT FUNCTIONS =====
+        function buildPrintHtml(title, tableHtml, filterInfo) {
+            const currentUser = getUser();
+            const waliKelasName = currentUser && currentUser.nama ? currentUser.nama : '................................';
+            const waliKelasNIP = currentUser && currentUser.nip ? currentUser.nip : '-';
+            const todayStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const infoRows = filterInfo.map(f => `<tr><td style="width:120px;padding:2px 4px;font-size:10px;"><strong>${f.label}</strong></td><td style="width:10px;padding:2px 4px;font-size:10px;">:</td><td style="padding:2px 4px;font-size:10px;">${f.value}</td></tr>`).join('');
+            return `
+                <html><head><title>${title}</title>
+                <style>
+                    @page { size: A4 portrait; margin: 20mm 15mm 15mm 15mm; }
+                    body { font-family: 'Times New Roman', Times, serif; padding: 0; margin: 0; color: #000; }
+                    .kop { text-align: center; margin-bottom: 10px; }
+                    .kop .logo { font-size: 32px; color: #1d4ed8; margin-bottom: 2px; }
+                    .kop h1 { margin: 2px 0; font-size: 18px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+                    .kop .sub { font-size: 11px; margin: 1px 0; color: #333; }
+                    .kop .garis { border-bottom: 3px double #000; margin-top: 6px; }
+                    .kop .garis-bawah { border-bottom: 1px solid #000; margin-bottom: 10px; }
+                    h3 { text-align: center; font-size: 14px; margin: 10px 0; text-transform: uppercase; font-weight: bold; letter-spacing: 2px; }
+                    .info { width: 100%; margin-bottom: 10px; border-collapse: collapse; }
+                    table.data { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 20px; }
+                    table.data th { background-color: #1d4ed8; color: #fff; padding: 5px 4px; text-align: center; font-size: 10px; font-weight: bold; border: 1px solid #333; }
+                    table.data td { border: 1px solid #333; padding: 4px; }
+                    table.data tr:nth-child(even) { background-color: #f0f4ff; }
+                    .footer { margin-top: 40px; }
+                    .footer table { width: 100%; border-collapse: collapse; }
+                    .footer td { text-align: center; width: 50%; padding: 0 20px; vertical-align: top; }
+                    .footer .nip { font-size: 10px; margin-top: 3px; }
+                    .footer .jabatan { font-weight: bold; margin-top: 5px; }
+                    .ttd-space { height: 50px; }
+                    .ttd-line { border-bottom: 1px solid #000; width: 170px; margin: 5px auto; }
+                    .tgl-cetak { text-align: right; font-size: 10px; color: #666; margin-top: 15px; }
+                </style></head><body>
+                <div class="kop">
+                    <div class="logo">🏫</div>
+                    <h1>SMP Swasta Beringin Kupang</h1>
+                    <div class="sub">NPSN: 50305278</div>
+                    <div class="sub">Jl. Delima No. 12, Kelurahan Oepura, Kecamatan Maulafa</div>
+                    <div class="sub">Kota Kupang - Nusa Tenggara Timur</div>
+                    <div class="garis"></div>
+                    <div class="garis-bawah"></div>
+                </div>
+                <h3>${title}</h3>
+                <table class="info">${infoRows}</table>
+                <table class="data">
+                    <thead><tr><th style="width:30px;">No</th><th style="width:70px;">NIS</th><th>Nama Siswa</th><th style="width:50px;">Kelas</th><th style="width:40px;">Hadir</th><th style="width:35px;">Izin</th><th style="width:35px;">Sakit</th><th style="width:40px;">Alpha</th></tr></thead>
+                    <tbody>${tableHtml}</tbody>
+                </table>
+                <div class="footer">
+                    <table>
+                        <tr>
+                            <td>
+                                <div>Mengetahui,</div>
+                                <div class="jabatan">Kepala Sekolah</div>
+                                <div class="ttd-space"></div>
+                                <div class="nip"><strong>Suryanti E. Benu, S.Pd., Gr</strong></div>
+                                <div class="ttd-line"></div>
+                                <div class="nip">NIP. -</div>
+                            </td>
+                            <td>
+                                <div>${todayStr}</div>
+                                <div class="jabatan">Wali Kelas</div>
+                                <div class="ttd-space"></div>
+                                <div class="nip"><strong>${waliKelasName}</strong></div>
+                                <div class="ttd-line"></div>
+                                <div class="nip">NIP. ${waliKelasNIP}</div>
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="tgl-cetak">Dokumen ini dicetak pada: ${todayStr}</div>
+                </div>
+                </body></html>
+            `;
+        }
+
+        function getTableData(tableId) {
+            const rows = [];
+            const tbody = document.getElementById(tableId);
+            if (!tbody) return rows;
+            tbody.querySelectorAll('tr').forEach(row => {
+                const cols = row.querySelectorAll('td');
+                if (cols.length >= 8) {
+                    rows.push({
+                        nis: cols[1].textContent.trim(),
+                        nama: cols[2].textContent.trim(),
+                        kelas: cols[3].textContent.trim(),
+                        hadir: cols[4].textContent.trim(),
+                        izin: cols[5].textContent.trim(),
+                        sakit: cols[6].textContent.trim(),
+                        alpha: cols[7].textContent.trim()
+                    });
+                }
+            });
+            return rows;
+        }
+
+        function getTableHtml(tableId) {
+            let html = '';
+            const rows = getTableData(tableId);
+            rows.forEach((r, i) => {
+                html += `<tr><td style="text-align:center">${i + 1}</td><td>${r.nis}</td><td>${r.nama}</td><td style="text-align:center">${r.kelas}</td><td style="text-align:center">${r.hadir}</td><td style="text-align:center">${r.izin}</td><td style="text-align:center">${r.sakit}</td><td style="text-align:center">${r.alpha}</td></tr>`;
+            });
+            return html;
+        }
+
+        window.printLaporanHarian = () => {
+            const tgl = document.getElementById('tanggalHarian').value;
+            const kl = document.getElementById('kelasHarian').value || 'Semua Kelas';
+            const html = buildPrintHtml('LAPORAN ABSENSI HARIAN', getTableHtml('laporanHarianTable'), [{ label: 'Tanggal', value: tgl }, { label: 'Kelas', value: kl }]);
+            const w = window.open('', '', 'width=900,height=700');
+            w.document.write(html);
+            w.document.close();
+            w.print();
+        };
+
+        window.printLaporanBulanan = () => {
+            const bln = document.getElementById('bulan').value;
+            const thn = document.getElementById('tahun').value;
+            const kl = document.getElementById('kelasBulanan').value || 'Semua Kelas';
+            const namaBln = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            const html = buildPrintHtml('LAPORAN ABSENSI BULANAN', getTableHtml('laporanBulananTable'), [{ label: 'Bulan', value: `${namaBln[bln]} ${thn}` }, { label: 'Kelas', value: kl }]);
+            const w = window.open('', '', 'width=900,height=700');
+            w.document.write(html);
+            w.document.close();
+            w.print();
+        };
+
+        window.printLaporanSemester = () => {
+            const smt = document.getElementById('semester').value;
+            const thn = document.getElementById('tahunSemester').value;
+            const kl = document.getElementById('kelasSemester').value || 'Semua Kelas';
+            const smtTxt = smt == 1 ? 'Semester 1 (Jan-Jun)' : 'Semester 2 (Jul-Des)';
+            const html = buildPrintHtml('LAPORAN ABSENSI SEMESTER', getTableHtml('laporanSemesterTable'), [{ label: 'Semester', value: smtTxt }, { label: 'Tahun', value: thn }, { label: 'Kelas', value: kl }]);
+            const w = window.open('', '', 'width=900,height=700');
+            w.document.write(html);
+            w.document.close();
+            w.print();
+        };
+
+        // ===== EXCEL EXPORT =====
+        function exportExcel(tableId, filename, headers) {
+            const rows = getTableData(tableId);
+            let csv = headers.join(',') + '\n';
+            rows.forEach(r => {
+                csv += `${r.nis},"${r.nama}",${r.kelas},${r.hadir},${r.izin},${r.sakit},${r.alpha}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+
+        window.exportExcelHarian = () => {
+            const tgl = document.getElementById('tanggalHarian').value;
+            const kl = document.getElementById('kelasHarian').value || 'Semua';
+            exportExcel('laporanHarianTable', `Laporan_Harian_${tgl}_${kl}.csv`, ['NIS', 'Nama Siswa', 'Kelas', 'Hadir', 'Izin', 'Sakit', 'Alpha']);
+        };
+        window.exportExcelBulanan = () => {
+            const bln = document.getElementById('bulan').value;
+            const thn = document.getElementById('tahun').value;
+            const kl = document.getElementById('kelasBulanan').value || 'Semua';
+            exportExcel('laporanBulananTable', `Laporan_Bulanan_${bln}_${thn}_${kl}.csv`, ['NIS', 'Nama Siswa', 'Kelas', 'Hadir', 'Izin', 'Sakit', 'Alpha']);
+        };
+        window.exportExcelSemester = () => {
+            const smt = document.getElementById('semester').value;
+            const thn = document.getElementById('tahunSemester').value;
+            const kl = document.getElementById('kelasSemester').value || 'Semua';
+            exportExcel('laporanSemesterTable', `Laporan_Semester_${smt}_${thn}_${kl}.csv`, ['NIS', 'Nama Siswa', 'Kelas', 'Hadir', 'Izin', 'Sakit', 'Alpha']);
+        };
+
+        // ===== PDF EXPORT (Pure jsPDF - no html2canvas) =====
+        async function getBase64ImageFromURL(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = () => reject(new Error('Failed to load image'));
+                img.src = url;
+            });
+        }
+
+        async function exportPDF(tableId, title, infoRows, filename) {
+            const rows = getTableData(tableId);
+            if (rows.length === 0) { showToast('Tidak ada data untuk diexport', 'warning'); return; }
+
+            showToast('Membuat PDF...', 'info');
+
+            const todayStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+
+            // Page dimensions
+            const pageW = 210;
+            const pageH = 297;
+            const margin = 15;
+            const contentW = pageW - (margin * 2);
+            const lineH = 4.5; // line height
+
+            let y = margin + 2; // start y position
+
+            // ===== LOGO =====
+            try {
+                const logoBase64 = await getBase64ImageFromURL('../assets/img/logo.png');
+                pdf.addImage(logoBase64, 'PNG', margin + 7, y, 18, 18);
+            } catch (e) {
+                console.log('Error loading logo for PDF', e);
+            }
+
+            // ===== KOP =====
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(14);
+            pdf.setTextColor(0);
+            pdf.text('SMP SWASTA BERINGIN KUPANG', pageW / 2, y + 4, { align: 'center' });
+            y += 9;
+
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(80);
+            pdf.text('NPSN: 50305278', pageW / 2, y, { align: 'center' });
+            y += 3.5;
+            pdf.text('Jl. Delima No. 12, Kelurahan Oepura, Kecamatan Maulafa', pageW / 2, y, { align: 'center' });
+            y += 3.5;
+            pdf.text('Kota Kupang - Nusa Tenggara Timur', pageW / 2, y, { align: 'center' });
+            y += 4;
+
+            // Garis double
+            pdf.setDrawColor(0);
+            pdf.setLineWidth(0.8);
+            pdf.line(margin, y, pageW - margin, y);
+            y += 1;
+            pdf.setLineWidth(0.3);
+            pdf.line(margin, y, pageW - margin, y);
+            y += 5;
+
+            // ===== JUDUL =====
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(11);
+            pdf.setTextColor(0);
+            pdf.text(title, pageW / 2, y, { align: 'center' });
+            y += 6;
+
+            // ===== INFO =====
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(8);
+            infoRows.forEach(r => {
+                pdf.setFont('times', 'bold');
+                pdf.text(r.label + ':', margin, y);
+                const labelW = pdf.getTextWidth(r.label + ': ');
+                pdf.setFont('times', 'normal');
+                pdf.text(r.value, margin + labelW + 2, y);
+                y += 4;
+            });
+            pdf.text('Dicetak:', margin, y);
+            const cetakW = pdf.getTextWidth('Dicetak: ');
+            pdf.text(todayStr, margin + cetakW + 2, y);
+            y += 6;
+
+            // ===== TABLE HEADER (full width margin-to-margin) =====
+            const colW = [10, 20, 75, 18, 14, 14, 14, 15]; // widths in mm (total=180mm = full content width)
+            const headers = ['No', 'NIS', 'Nama Siswa', 'Kelas', 'Hadir', 'Izin', 'Sakit', 'Alpha'];
+            const startX = margin; // start from left margin
+
+            function drawRow(cells, isHeader, rowY) {
+                let x = startX;
+                const rowH = isHeader ? 5 : 4.5;
+
+                // Draw cells
+                cells.forEach((cell, i) => {
+                    // Background
+                    if (isHeader) {
+                        pdf.setFillColor(29, 78, 216); // blue #1d4ed8
+                    } else {
+                        pdf.setFillColor(255, 255, 255);
                     }
-                    for (let i = 1; i <= totalPages; i++) {
-                        if (i === page) {
-                            paginationDiv.innerHTML += `<button class="px-3 py-1 bg-green-600 text-white rounded text-sm">${i}</button>`;
-                        } else if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
-                            paginationDiv.innerHTML += `<button onclick="loadLaporanBulanan(${i})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">${i}</button>`;
-                        } else if (i === page - 2 || i === page + 2) {
-                            paginationDiv.innerHTML += `<span class="px-2">...</span>`;
+                    pdf.setDrawColor(0);
+                    pdf.setLineWidth(0.2);
+                    pdf.rect(x, rowY, colW[i], rowH, isHeader ? 'FD' : 'D');
+
+                    // Text
+                    pdf.setFont('times', isHeader ? 'bold' : 'normal');
+                    pdf.setFontSize(isHeader ? 7 : 7);
+                    pdf.setTextColor(isHeader ? 255 : 0);
+
+                    if (isHeader) {
+                        pdf.text(cell, x + colW[i] / 2, rowY + rowH / 2 + 1.2, { align: 'center' });
+                    } else {
+                        if (i === 0 || i === 4 || i === 5 || i === 6 || i === 7) {
+                            pdf.text(cell, x + colW[i] / 2, rowY + rowH / 2 + 1.2, { align: 'center' });
+                        } else if (i === 1) {
+                            pdf.text(cell, x + 1, rowY + rowH / 2 + 1.2);
+                        } else {
+                            pdf.text(cell, x + 1, rowY + rowH / 2 + 1.2);
                         }
                     }
-                    if (page < totalPages) {
-                        paginationDiv.innerHTML += `<button onclick="loadLaporanBulanan(${page + 1})" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">Next</button>`;
-                    }
-                }
-            } catch (error) {
-                showToast(error.message, 'error');
+                    x += colW[i];
+                });
+                return rowY + rowH;
             }
-        };
 
-        // Print Laporan Harian
-        window.printLaporanHarian = () => {
-            const tanggal = document.getElementById('tanggalHarian').value;
-            const kelas = document.getElementById('kelasHarian').value;
-            const table = document.getElementById('laporanHarianTable').innerHTML;
-            
-            const printWindow = window.open('', '', 'width=800,height=600');
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Laporan Harian Absensi</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h2 { text-align: center; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-                        th { background-color: #f0f0f0; }
-                        .total-row { background-color: #e0e0e0; font-weight: bold; }
-                    </style>
-                </head>
-                <body>
-                    <h2>Laporan Absensi Harian</h2>
-                    <p>Tanggal: ${tanggal}</p>
-                    <p>Kelas: ${kelas || 'Semua Kelas'}</p>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Kelas</th>
-                                <th>Total Siswa</th>
-                                <th>Hadir</th>
-                                <th>Izin</th>
-                                <th>Sakit</th>
-                                <th>Alpha</th>
-                            </tr>
-                        </thead>
-                        <tbody>${table}</tbody>
-                    </table>
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        };
-
-        // Export Excel Harian
-        window.exportExcelHarian = () => {
-            const tanggal = document.getElementById('tanggalHarian').value;
-            const kelas = document.getElementById('kelasHarian').value;
-            const table = document.getElementById('laporanHarianTable');
-            
-            let csv = 'Kelas,Total Siswa,Hadir,Izin,Sakit,Alpha\n';
-            table.querySelectorAll('tr').forEach(row => {
-                const cols = row.querySelectorAll('td');
-                if (cols.length > 0) {
-                    csv += Array.from(cols).map(col => col.textContent.trim()).join(',') + '\n';
+            // Check if we need a new page
+            function checkPage(newY) {
+                if (newY > pageH - margin - 20) {
+                    pdf.addPage();
+                    return margin + 2;
                 }
-            });
-            
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Laporan_Harian_${tanggal}_${kelas || 'Semua'}.csv`;
-            a.click();
-        };
+                return newY;
+            }
 
-        // Export PDF Harian
-        window.exportPDFHarian = () => {
+            // Draw header
+            const headerY = y;
+            y = drawRow(headers, true, y);
+
+            // ===== TABLE BODY =====
+            let totalHadir = 0, totalIzin = 0, totalSakit = 0, totalAlpha = 0;
+            rows.forEach((r, i) => {
+                y = checkPage(y);
+                const cells = [
+                    String(i + 1),
+                    r.nis,
+                    r.nama,
+                    r.kelas,
+                    r.hadir,
+                    r.izin,
+                    r.sakit,
+                    r.alpha
+                ];
+                y = drawRow(cells, false, y);
+
+                totalHadir += parseInt(r.hadir) || 0;
+                totalIzin += parseInt(r.izin) || 0;
+                totalSakit += parseInt(r.sakit) || 0;
+                totalAlpha += parseInt(r.alpha) || 0;
+            });
+
+            // ===== TABLE SUMMARY (Total Row - transparent background) =====
+            y = checkPage(y);
+            let x = startX;
+            const sumRowH = 5;
+            pdf.setDrawColor(0);
+            pdf.setLineWidth(0.3);
+
+            // No column
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(7);
+            pdf.setTextColor(0);
+            pdf.rect(x, y, colW[0], sumRowH, 'D');
+            pdf.text('', x + colW[0] / 2, y + sumRowH / 2 + 1.2, { align: 'center' });
+            x += colW[0];
+
+            // NIS column
+            pdf.rect(x, y, colW[1], sumRowH, 'D');
+            pdf.text('TOTAL', x + colW[1] / 2, y + sumRowH / 2 + 1.2, { align: 'center' });
+            x += colW[1];
+
+            // Nama column
+            pdf.rect(x, y, colW[2], sumRowH, 'D');
+            x += colW[2];
+
+            // Kelas column
+            pdf.rect(x, y, colW[3], sumRowH, 'D');
+            x += colW[3];
+
+            // Hadir
+            pdf.rect(x, y, colW[4], sumRowH, 'D');
+            pdf.setTextColor(0);
+            pdf.text(String(totalHadir), x + colW[4] / 2, y + sumRowH / 2 + 1.2, { align: 'center' });
+            x += colW[4];
+
+            // Izin
+            pdf.rect(x, y, colW[5], sumRowH, 'D');
+            pdf.setTextColor(0);
+            pdf.text(String(totalIzin), x + colW[5] / 2, y + sumRowH / 2 + 1.2, { align: 'center' });
+            x += colW[5];
+
+            // Sakit
+            pdf.rect(x, y, colW[6], sumRowH, 'D');
+            pdf.setTextColor(0);
+            pdf.text(String(totalSakit), x + colW[6] / 2, y + sumRowH / 2 + 1.2, { align: 'center' });
+            x += colW[6];
+
+            // Alpha
+            pdf.rect(x, y, colW[7], sumRowH, 'D');
+            pdf.setTextColor(0);
+            pdf.text(String(totalAlpha), x + colW[7] / 2, y + sumRowH / 2 + 1.2, { align: 'center' });
+            x += colW[7];
+
+            pdf.setTextColor(0);
+            y += sumRowH;
+
+            y += 10;
+
+            // ===== FOOTER TTD =====
+            y = checkPage(y + 30);
+
+            // Left side - Kepala Sekolah
+            const footerY = y;
+            const leftCenterX = margin + 40;
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(0);
+            pdf.text('Mengetahui,', leftCenterX, footerY, { align: 'center' });
+            pdf.text('Kepala Sekolah', leftCenterX, footerY + 4, { align: 'center' });
+
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(7);
+            pdf.text('Suryanti E. Benu, S.Pd., Gr', leftCenterX, footerY + 20, { align: 'center' });
+            pdf.setLineWidth(0.3);
+            pdf.line(margin + 10, footerY + 22, margin + 70, footerY + 22);
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(6);
+            pdf.text('NIP. -', leftCenterX, footerY + 25, { align: 'center' });
+
+            // Right side - Wali Kelas
+            const currentUser = getUser();
+            const waliKelasName = currentUser && currentUser.nama ? currentUser.nama : '................................';
+            const waliKelasNIP = currentUser && currentUser.nip ? currentUser.nip : '-';
+
+            const rightCenterX = pageW - margin - 40;
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(8);
+            pdf.text(todayStr, rightCenterX, footerY, { align: 'center' });
+            pdf.text('Wali Kelas', rightCenterX, footerY + 4, { align: 'center' });
+
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(7);
+            pdf.text(waliKelasName, rightCenterX, footerY + 20, { align: 'center' });
+            pdf.setLineWidth(0.3);
+            pdf.line(pageW - margin - 70, footerY + 22, pageW - margin - 10, footerY + 22);
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(6);
+            pdf.text(`NIP. ${waliKelasNIP}`, rightCenterX, footerY + 25, { align: 'center' });
+
+            y = footerY + 32;
+
+            // Tanggal cetak
+            pdf.setFont('times', 'italic');
+            pdf.setFontSize(6);
+            pdf.setTextColor(120);
+            pdf.text('Dokumen ini dicetak pada: ' + todayStr, pageW / 2, y, { align: 'center' });
+
+            // ===== PAGE NUMBERS =====
+            const totalPages = pdf.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFont('times', 'normal');
+                pdf.setFontSize(7);
+                pdf.setTextColor(150);
+                pdf.text(`Halaman ${i} dari ${totalPages}`, pageW / 2, pageH - 8, { align: 'center' });
+            }
+
+            // Save and preview
+            const blob = pdf.output('blob');
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+            showToast('PDF berhasil dibuka di tab baru', 'success');
+        }
+
+        window.exportPDFHarian = async () => {
+            const tgl = document.getElementById('tanggalHarian').value;
+            const kl = document.getElementById('kelasHarian').value || 'Semua Kelas';
+            await exportPDF('laporanHarianTable', 'LAPORAN ABSENSI HARIAN', [{ label: 'Tanggal', value: tgl }, { label: 'Kelas', value: kl }], `Rekap_Absensi_Harian.pdf`);
+        };
+        window.exportPDFBulanan = async () => {
+            const bln = parseInt(document.getElementById('bulan').value);
+            const thn = document.getElementById('tahun').value;
+            const kl = document.getElementById('kelasBulanan').value || 'Semua Kelas';
+            const namaBln = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            const rows = window.laporanBulananDataAll || [];
+            if (rows.length === 0) { showToast('Tidak ada data untuk diexport', 'warning'); return; }
+
+            showToast('Membuat PDF...', 'info');
+
+            const title = 'LAPORAN ABSENSI BULANAN';
+            const infoRows = [
+                { label: 'Bulan', value: `${namaBln[bln]} ${thn}` },
+                { label: 'Kelas', value: kl }
+            ];
+
+            const todayStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            const tanggal = document.getElementById('tanggalHarian').value;
-            const kelas = document.getElementById('kelasHarian').value;
-            
-            doc.setFontSize(16);
-            doc.text('Laporan Absensi Harian', 105, 15, { align: 'center' });
-            doc.setFontSize(10);
-            doc.text(`Tanggal: ${tanggal}`, 14, 25);
-            doc.text(`Kelas: ${kelas || 'Semua Kelas'}`, 14, 30);
-            
-            const table = document.getElementById('laporanHarianTable');
-            const rows = [];
-            table.querySelectorAll('tr').forEach(row => {
-                const cols = row.querySelectorAll('td');
-                if (cols.length > 0) {
-                    rows.push(Array.from(cols).map(col => col.textContent.trim()));
+            const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape
+
+            // Page dimensions
+            const pageW = 297; // A4 landscape width
+            const pageH = 210; // A4 landscape height
+            const margin = 15;
+            const contentW = pageW - (margin * 2);
+
+            let y = margin + 2;
+
+            // ===== LOGO =====
+            try {
+                const logoBase64 = await getBase64ImageFromURL('../assets/img/logo.png');
+                pdf.addImage(logoBase64, 'PNG', margin + 7, y, 18, 18);
+            } catch (e) {
+                console.log('Error loading logo for PDF', e);
+            }
+
+            // ===== KOP =====
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(14);
+            pdf.setTextColor(0);
+            pdf.text('SMP SWASTA BERINGIN KUPANG', pageW / 2, y + 4, { align: 'center' });
+            y += 9;
+
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(80);
+            pdf.text('NPSN: 50305278', pageW / 2, y, { align: 'center' });
+            y += 3.5;
+            pdf.text('Jl. Delima No. 12, Kelurahan Oepura, Kecamatan Maulafa', pageW / 2, y, { align: 'center' });
+            y += 3.5;
+            pdf.text('Kota Kupang - Nusa Tenggara Timur', pageW / 2, y, { align: 'center' });
+            y += 4;
+
+            // Garis double
+            pdf.setDrawColor(0);
+            pdf.setLineWidth(0.8);
+            pdf.line(margin, y, pageW - margin, y);
+            y += 1;
+            pdf.setLineWidth(0.3);
+            pdf.line(margin, y, pageW - margin, y);
+            y += 5;
+
+            // ===== JUDUL =====
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(11);
+            pdf.setTextColor(0);
+            pdf.text(title, pageW / 2, y, { align: 'center' });
+            y += 6;
+
+            // ===== INFO =====
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(8);
+            infoRows.forEach(r => {
+                pdf.setFont('times', 'bold');
+                pdf.text(r.label + ':', margin, y);
+                const labelW = pdf.getTextWidth(r.label + ': ');
+                pdf.setFont('times', 'normal');
+                pdf.text(r.value, margin + labelW + 2, y);
+                y += 4;
+            });
+            pdf.text('Dicetak:', margin, y);
+            const cetakW = pdf.getTextWidth('Dicetak: ');
+            pdf.text(todayStr, margin + cetakW + 2, y);
+            y += 6;
+
+            // ===== TABLE HEADER =====
+            const colW = [10, 45, 15, 13, 13, 13, 13, 20, 125]; // total = 267 = contentW
+            const headers = ['No', 'Nama Siswa', 'Kelas', 'Hadir', 'Ijin', 'Sakit', 'Alpa', 'Kehadiran(%)', 'Tanggal Absen'];
+            const startX = margin;
+
+            function checkPage(newY) {
+                if (newY > pageH - margin - 20) {
+                    pdf.addPage();
+                    return margin + 2;
                 }
-            });
-            
-            doc.autoTable({
-                head: [['Kelas', 'Total Siswa', 'Hadir', 'Izin', 'Sakit', 'Alpha']],
-                body: rows,
-                startY: 35
-            });
-            
-            doc.save(`Laporan_Harian_${tanggal}_${kelas || 'Semua'}.pdf`);
-        };
+                return newY;
+            }
 
-        // Print Laporan Bulanan
-        window.printLaporanBulanan = () => {
-            const bulan = document.getElementById('bulan').value;
-            const tahun = document.getElementById('tahun').value;
-            const kelas = document.getElementById('kelasBulanan').value;
-            const table = document.getElementById('laporanBulananTable').innerHTML;
+            let currentY = y;
+            let headerH = 6;
             
-            const printWindow = window.open('', '', 'width=800,height=600');
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Laporan Bulanan Absensi</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h2 { text-align: center; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-                        th { background-color: #f0f0f0; }
-                        .total-row { background-color: #e0e0e0; font-weight: bold; }
-                    </style>
-                </head>
-                <body>
-                    <h2>Laporan Absensi Bulanan</h2>
-                    <p>Bulan: ${bulan} / ${tahun}</p>
-                    <p>Kelas: ${kelas || 'Semua Kelas'}</p>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>NIS</th>
-                                <th>Nama Siswa</th>
-                                <th>Kelas</th>
-                                <th>Hadir</th>
-                                <th>Izin</th>
-                                <th>Sakit</th>
-                                <th>Alpha</th>
-                            </tr>
-                        </thead>
-                        <tbody>${table}</tbody>
-                    </table>
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        };
+            // Draw Header
+            let x = startX;
+            headers.forEach((cell, i) => {
+                pdf.setFillColor(29, 78, 216);
+                pdf.setDrawColor(0);
+                pdf.setLineWidth(0.2);
+                pdf.rect(x, currentY, colW[i], headerH, 'FD');
+                pdf.setFont('times', 'bold');
+                pdf.setFontSize(8);
+                pdf.setTextColor(255);
+                pdf.text(cell, x + colW[i] / 2, currentY + headerH / 2 + 1.2, { align: 'center' });
+                x += colW[i];
+            });
+            currentY += headerH;
 
-        // Export Excel Bulanan
-        window.exportExcelBulanan = () => {
-            const bulan = document.getElementById('bulan').value;
-            const tahun = document.getElementById('tahun').value;
-            const kelas = document.getElementById('kelasBulanan').value;
-            const table = document.getElementById('laporanBulananTable');
-            
-            let csv = 'NIS,Nama Siswa,Kelas,Hadir,Izin,Sakit,Alpha\n';
-            table.querySelectorAll('tr').forEach(row => {
-                const cols = row.querySelectorAll('td');
-                if (cols.length > 0) {
-                    csv += Array.from(cols).map(col => col.textContent.trim()).join(',') + '\n';
+            // ===== TABLE BODY =====
+            rows.forEach((r, i) => {
+                const nama = r.nama || r.nama_lengkap || r.nama_siswa || '-';
+                const kelas = r.kelas || '-';
+                const hadir = parseInt(r.hadir) || 0;
+                const ijin = parseInt(r.izin) || 0;
+                const sakit = parseInt(r.sakit) || 0;
+                const alpa = parseInt(r.alpha) || 0;
+                const total = hadir + ijin + sakit + alpa;
+                let kehadiran = '0%';
+                if (total > 0) {
+                    kehadiran = ((hadir / total) * 100).toFixed(1) + '%';
                 }
+                const tanggalAbsenStr = r.tanggal_absen || '-';
+
+                // Calculate required height based on multiline text
+                pdf.setFont('times', 'normal');
+                pdf.setFontSize(8);
+                pdf.setTextColor(0);
+                
+                const splitTanggal = pdf.splitTextToSize(tanggalAbsenStr, colW[8] - 4);
+                const splitNama = pdf.splitTextToSize(nama, colW[1] - 4);
+                
+                const lineCount = Math.max(splitTanggal.length, splitNama.length);
+                const rowH = Math.max(6, lineCount * 4 + 2); // 4mm per line
+
+                currentY = checkPage(currentY);
+
+                x = startX;
+                
+                // No
+                pdf.rect(x, currentY, colW[0], rowH, 'D');
+                pdf.text(String(i + 1), x + colW[0] / 2, currentY + 4, { align: 'center' });
+                x += colW[0];
+
+                // Nama Siswa
+                pdf.rect(x, currentY, colW[1], rowH, 'D');
+                pdf.text(splitNama, x + 2, currentY + 4);
+                x += colW[1];
+
+                // Kelas
+                pdf.rect(x, currentY, colW[2], rowH, 'D');
+                pdf.text(kelas, x + colW[2] / 2, currentY + 4, { align: 'center' });
+                x += colW[2];
+
+                // Hadir
+                pdf.rect(x, currentY, colW[3], rowH, 'D');
+                pdf.text(String(hadir), x + colW[3] / 2, currentY + 4, { align: 'center' });
+                x += colW[3];
+
+                // Ijin
+                pdf.rect(x, currentY, colW[4], rowH, 'D');
+                pdf.text(String(ijin), x + colW[4] / 2, currentY + 4, { align: 'center' });
+                x += colW[4];
+
+                // Sakit
+                pdf.rect(x, currentY, colW[5], rowH, 'D');
+                pdf.text(String(sakit), x + colW[5] / 2, currentY + 4, { align: 'center' });
+                x += colW[5];
+
+                // Alpa
+                pdf.rect(x, currentY, colW[6], rowH, 'D');
+                pdf.text(String(alpa), x + colW[6] / 2, currentY + 4, { align: 'center' });
+                x += colW[6];
+
+                // Kehadiran(%)
+                pdf.rect(x, currentY, colW[7], rowH, 'D');
+                pdf.text(kehadiran, x + colW[7] / 2, currentY + 4, { align: 'center' });
+                x += colW[7];
+
+                // Tanggal Absen
+                pdf.rect(x, currentY, colW[8], rowH, 'D');
+                pdf.text(splitTanggal, x + 2, currentY + 4);
+                
+                currentY += rowH;
             });
-            
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Laporan_Bulanan_${bulan}_${tahun}_${kelas || 'Semua'}.csv`;
-            a.click();
+
+            currentY += 10;
+
+            // ===== FOOTER TTD =====
+            currentY = checkPage(currentY + 30);
+
+            const footerY = currentY;
+            const leftCenterX = margin + 50;
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(9);
+            pdf.setTextColor(0);
+            pdf.text('Mengetahui,', leftCenterX, footerY, { align: 'center' });
+            pdf.text('Kepala Sekolah', leftCenterX, footerY + 5, { align: 'center' });
+
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(8);
+            pdf.text('Suryanti E. Benu, S.Pd., Gr', leftCenterX, footerY + 25, { align: 'center' });
+            pdf.setLineWidth(0.3);
+            pdf.line(margin + 10, footerY + 27, margin + 90, footerY + 27);
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(7);
+            pdf.text('NIP. -', leftCenterX, footerY + 31, { align: 'center' });
+
+            const currentUser = getUser();
+            const waliKelasName = currentUser && currentUser.nama ? currentUser.nama : '................................';
+            const waliKelasNIP = currentUser && currentUser.nip ? currentUser.nip : '-';
+
+            const rightCenterX = pageW - margin - 50;
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(9);
+            pdf.text(todayStr, rightCenterX, footerY, { align: 'center' });
+            pdf.text('Wali Kelas', rightCenterX, footerY + 5, { align: 'center' });
+
+            pdf.setFont('times', 'bold');
+            pdf.setFontSize(8);
+            pdf.text(waliKelasName, rightCenterX, footerY + 25, { align: 'center' });
+            pdf.setLineWidth(0.3);
+            pdf.line(pageW - margin - 90, footerY + 27, pageW - margin - 10, footerY + 27);
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(7);
+            pdf.text(`NIP. ${waliKelasNIP}`, rightCenterX, footerY + 31, { align: 'center' });
+
+            currentY = footerY + 38;
+
+            pdf.setFont('times', 'italic');
+            pdf.setFontSize(7);
+            pdf.setTextColor(120);
+            pdf.text('Dokumen ini dicetak pada: ' + todayStr, pageW / 2, currentY, { align: 'center' });
+
+            // ===== PAGE NUMBERS =====
+            const totalPages = pdf.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFont('times', 'normal');
+                pdf.setFontSize(8);
+                pdf.setTextColor(150);
+                pdf.text(`Halaman ${i} dari ${totalPages}`, pageW / 2, pageH - 8, { align: 'center' });
+            }
+
+            const blob = pdf.output('blob');
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+            showToast('PDF berhasil dibuka di tab baru', 'success');
+        };
+        window.exportPDFSemester = async () => {
+            const smt = document.getElementById('semester').value;
+            const thn = document.getElementById('tahunSemester').value;
+            const kl = document.getElementById('kelasSemester').value || 'Semua Kelas';
+            const smtTxt = smt == 1 ? 'Semester 1 (Jan-Jun)' : 'Semester 2 (Jul-Des)';
+            const file = smt == 1 ? 'Rekap_Absensi_Semester1.pdf' : 'Rekap_Absensi_Semester2.pdf';
+            await exportPDF('laporanSemesterTable', 'LAPORAN ABSENSI SEMESTER', [{ label: 'Semester', value: smtTxt }, { label: 'Tahun', value: thn }, { label: 'Kelas', value: kl }], file);
         };
 
-        // Export PDF Bulanan
-        window.exportPDFBulanan = () => {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            const bulan = document.getElementById('bulan').value;
-            const tahun = document.getElementById('tahun').value;
-            const kelas = document.getElementById('kelasBulanan').value;
-            
-            const namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-            
-            doc.setFontSize(16);
-            doc.text('Laporan Absensi Bulanan', 105, 15, { align: 'center' });
-            doc.setFontSize(10);
-            doc.text(`Bulan: ${namaBulan[bulan]} ${tahun}`, 14, 25);
-            doc.text(`Kelas: ${kelas || 'Semua Kelas'}`, 14, 30);
-            
-            const table = document.getElementById('laporanBulananTable');
-            const rows = [];
-            table.querySelectorAll('tr').forEach(row => {
-                const cols = row.querySelectorAll('td');
-                if (cols.length > 0) {
-                    rows.push(Array.from(cols).map(col => col.textContent.trim()));
-                }
-            });
-            
-            doc.autoTable({
-                head: [['NIS', 'Nama Siswa', 'Kelas', 'Hadir', 'Izin', 'Sakit', 'Alpha']],
-                body: rows,
-                startY: 35,
-                styles: { fontSize: 8 }
-            });
-            
-            doc.save(`Laporan_Bulanan_${bulan}_${tahun}_${kelas || 'Semua'}.pdf`);
-        };
-
+        // Load default
         loadLaporanHarian();
     </script>
 </body>
+
 </html>

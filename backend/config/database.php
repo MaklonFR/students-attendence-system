@@ -2,7 +2,7 @@
 
 class Database {
     private $host = 'localhost';
-    private $db_name = 'absen_db';
+    private $db_name = 'db_absensi_smp';
     private $username = 'root';
     private $password = '';
     private $conn;

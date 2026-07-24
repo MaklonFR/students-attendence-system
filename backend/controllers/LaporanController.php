@@ -31,4 +31,16 @@ class LaporanController {
         $data = $this->absensiModel->getLaporanBulanan($bulan, $tahun, $kelas);
         Response::success('Laporan bulanan berhasil diambil', $data);
     }
+
+    public function semester() {
+        Middleware::auth();
+
+        $query = Request::getQuery();
+        $semester = $query['semester'] ?? 1;
+        $tahun = $query['tahun'] ?? date('Y');
+        $kelas = $query['kelas'] ?? '';
+
+        $data = $this->absensiModel->getLaporanSemester($semester, $tahun, $kelas);
+        Response::success('Laporan semester berhasil diambil', $data);
+    }
 }
