@@ -1,6 +1,5 @@
 const API_CONFIG = {
-    //BASE_URL: 'http://localhost:8000',
-    BASE_URL: 'https://absen.batucermin-desa.id/public',
+    BASE_URL: 'http://localhost:8000',
     ENDPOINTS: {
         LOGIN: '/api/login',
         LOGOUT: '/api/logout',
